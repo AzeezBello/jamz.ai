@@ -40,6 +40,13 @@ redirect_uri = "env(GOOGLE_REDIRECT_URI)"
 enabled = true
 file_size_limit = "100MiB"
 
+# Inside the local stack SUPABASE_URL is the internal Kong address, so storage
+# signs URLs that no browser on the host can reach. This tells the download
+# function which origin to hand out instead. In production the two are the same
+# and this is unnecessary.
+[edge_runtime.secrets]
+PUBLIC_SUPABASE_URL = "http://127.0.0.1:54321"
+
 # Stripe cannot present a Supabase JWT, so this one endpoint verifies the
 # request with the webhook signing secret instead.
 [functions.stripe-webhook]

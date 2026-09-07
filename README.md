@@ -186,6 +186,7 @@ select cron.schedule('reap-jobs', '* * * * *', $$select reap_stalled_jobs()$$);
 | `npm run db:reset`      | Recreate the local database from migrations     |
 | `npm run db:push`       | Push migrations to the linked project           |
 | `npm run db:test`       | Database invariant + RLS suites                 |
+| `npm run test:backend`  | Edge function smoke test over HTTP              |
 | `npm run functions:*`   | Serve / deploy edge functions                   |
 
 ---
@@ -214,9 +215,17 @@ transitions, the WAV encoder and formatting helpers.
 Both suites have been checked against deliberately broken schemas (guard
 trigger disabled, RLS disabled) to confirm they fail when they should.
 
-**End-to-end** (`npm run test:e2e`) — signup, generation, cancellation with
-refund, playback, download, billing and logout. Needs a running stack plus
-edge functions; see `e2e/README.md`.
+**Backend** (`npm run test:backend`, needs the stack plus edge functions) —
+`scripts/smoke-backend.mjs` drives the deployed functions over HTTP the way the
+browser does. This is the only layer that actually executes the Deno functions,
+the storage upload and the signed-URL path: signup credits, generate → poll →
+complete, a downloadable file verified as a real RIFF/WAVE that is not silence,
+private songs invisible to other users and to anonymous visitors, cancellation
+refunding, `402` on insufficient credits, and the worker refusing a user token.
+
+**End-to-end** (`npm run test:e2e`) — the same journeys through a real browser:
+signup, generation, cancellation with refund, playback, download, billing and
+logout. Needs a running stack plus edge functions; see `e2e/README.md`.
 
 ---
 
@@ -238,6 +247,11 @@ e2e/            Playwright specs
 ---
 
 ## Known gaps
+
+When `SUPABASE_URL` is an internal address — self-hosting, or the local CLI
+stack — storage signs download URLs that no browser can reach. Set
+`PUBLIC_SUPABASE_URL` to the origin users actually hit; on hosted Supabase the
+two are the same and it can be omitted.
 
 `record_play()` is callable by anonymous visitors and is not rate limited, so
 public play counts are inflatable. Counting them per viewer (or dropping

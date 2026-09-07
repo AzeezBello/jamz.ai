@@ -65,6 +65,28 @@ export function translatePgError(err: { message?: string } | null): HttpError {
   return new HttpError(500, 'internal_error', message);
 }
 
+/**
+ * Storage signs URLs against whatever base the client was built with, which
+ * inside a self-hosted stack is an internal address (e.g. http://kong:8000)
+ * that no browser can reach. Hosted Supabase sets SUPABASE_URL to the public
+ * project URL, so this is a no-op there; set PUBLIC_SUPABASE_URL when the two
+ * differ.
+ */
+export function toPublicUrl(signedUrl: string): string {
+  const publicBase = Deno.env.get('PUBLIC_SUPABASE_URL');
+  if (!publicBase) return signedUrl;
+
+  try {
+    const url = new URL(signedUrl);
+    const target = new URL(publicBase);
+    url.protocol = target.protocol;
+    url.host = target.host;
+    return url.toString();
+  } catch {
+    return signedUrl;
+  }
+}
+
 export function serviceClient(): SupabaseClient {
   return createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
     auth: { persistSession: false, autoRefreshToken: false },

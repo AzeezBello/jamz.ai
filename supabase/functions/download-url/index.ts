@@ -6,7 +6,14 @@
 // still hides private songs, and shared links must play for logged-out
 // visitors.
 
-import { handle, json, serviceClient, userClient, HttpError } from '../_shared/http.ts';
+import {
+  handle,
+  json,
+  serviceClient,
+  toPublicUrl,
+  userClient,
+  HttpError,
+} from '../_shared/http.ts';
 
 const SIGNED_URL_TTL_SECONDS = 300;
 
@@ -53,6 +60,6 @@ Deno.serve((req) =>
       throw new HttpError(500, 'sign_failed', error?.message ?? 'Could not sign the file.');
     }
 
-    return json(req, { url: data.signedUrl, expiresIn: SIGNED_URL_TTL_SECONDS });
+    return json(req, { url: toPublicUrl(data.signedUrl), expiresIn: SIGNED_URL_TTL_SECONDS });
   }),
 );
