@@ -42,3 +42,11 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Test artefacts
+playwright-report/
+test-results/
+
+# Supabase CLI local state
+supabase/.branches/
+supabase/.temp/

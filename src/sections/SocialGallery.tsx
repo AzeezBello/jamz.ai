@@ -3,11 +3,18 @@ import { Button } from '@/components/ui/button';
 import { Heart, Play } from 'lucide-react';
 
 const socialPosts = [
-  { id: 1, handle: "@timbaland", plays: "7.5K", likes: "892", image: "/images/song-1.jpg" },
-  { id: 2, handle: "@spellspellspell", plays: "3.4K", likes: "567", image: "/images/song-2.jpg" },
-  { id: 3, handle: "@nickfloats", plays: "9.9K", likes: "234", image: "/images/song-3.jpg", collab: "@milesmusickid" },
-  { id: 4, handle: "@devanibiza", plays: "6.8K", likes: "345", image: "/images/song-4.jpg" },
-  { id: 5, handle: "@techguyver", plays: "4.6K", likes: "678", image: "/images/song-5.jpg" },
+  { id: 1, handle: '@timbaland', plays: '7.5K', likes: '892', image: '/images/song-1.jpg' },
+  { id: 2, handle: '@spellspellspell', plays: '3.4K', likes: '567', image: '/images/song-2.jpg' },
+  {
+    id: 3,
+    handle: '@nickfloats',
+    plays: '9.9K',
+    likes: '234',
+    image: '/images/song-3.jpg',
+    collab: '@milesmusickid',
+  },
+  { id: 4, handle: '@devanibiza', plays: '6.8K', likes: '345', image: '/images/song-4.jpg' },
+  { id: 5, handle: '@techguyver', plays: '4.6K', likes: '678', image: '/images/song-5.jpg' },
 ];
 
 export default function SocialGallery() {
@@ -22,7 +29,7 @@ export default function SocialGallery() {
           observer.disconnect();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     if (sectionRef.current) {
@@ -51,7 +58,8 @@ export default function SocialGallery() {
             }`}
             style={{ transitionTimingFunction: 'var(--ease-out-expo)' }}
           >
-            Join the #1 AI music generator. Create songs, remix tracks, make beats, and share your music with millions — free forever.
+            Join the #1 AI music generator. Create songs, remix tracks, make beats, and share your
+            music with millions — free forever.
           </p>
         </div>
 
@@ -75,10 +83,10 @@ export default function SocialGallery() {
                   alt={`Post by ${post.handle}`}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
-                
+
                 {/* Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                
+
                 {/* Play Button */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <button className="w-12 h-12 rounded-full gradient-coral flex items-center justify-center transform scale-0 group-hover:scale-100 transition-transform duration-300">
@@ -89,9 +97,7 @@ export default function SocialGallery() {
                 {/* Info */}
                 <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <p className="text-white text-sm font-medium">{post.handle}</p>
-                  {post.collab && (
-                    <p className="text-white/60 text-xs">{post.collab}</p>
-                  )}
+                  {post.collab && <p className="text-white/60 text-xs">{post.collab}</p>}
                   <div className="flex items-center gap-3 mt-1 text-xs text-white/60">
                     <span>{post.plays}</span>
                     <span className="flex items-center gap-1">

@@ -4,18 +4,21 @@ import { Wand2, Save, Download } from 'lucide-react';
 const studioFeatures = [
   {
     icon: Wand2,
-    title: "Experience the modern song maker",
-    description: "Start, edit, remix—your way. Upload or record your own audio, rewrite lyrics, reorder sections, and reimagine your sound with powerful creative tools.",
+    title: 'Experience the modern song maker',
+    description:
+      'Start, edit, remix—your way. Upload or record your own audio, rewrite lyrics, reorder sections, and reimagine your sound with powerful creative tools.',
   },
   {
     icon: Save,
-    title: "Create everyday. Keep it all.",
-    description: "Make up to 500 custom songs a month, with full commercial rights on the Pro plan. Get inspired, break genre boundaries, and own what you generate—no strings attached.",
+    title: 'Create everyday. Keep it all.',
+    description:
+      'Make up to 500 custom songs a month, with full commercial rights on the Pro plan. Get inspired, break genre boundaries, and own what you generate—no strings attached.',
   },
   {
     icon: Download,
-    title: "Extract stems. Drop into your DAW.",
-    description: "Export up to 12 time-aligned WAV stems and use them seamlessly in Ableton, Logic, or any DAW. Clean, structured, and ready for pro workflows.",
+    title: 'Extract stems. Drop into your DAW.',
+    description:
+      'Export up to 12 time-aligned WAV stems and use them seamlessly in Ableton, Logic, or any DAW. Clean, structured, and ready for pro workflows.',
   },
 ];
 
@@ -31,7 +34,7 @@ export default function StudioFeatures() {
           observer.disconnect();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     if (sectionRef.current) {
@@ -57,14 +60,18 @@ export default function StudioFeatures() {
                 {/* Text Content */}
                 <div
                   className={`flex-1 ${isEven ? 'lg:text-right' : ''} transition-all duration-700 ${
-                    isVisible ? 'opacity-100 translate-x-0' : `opacity-0 ${isEven ? 'translate-x-20' : '-translate-x-20'}`
+                    isVisible
+                      ? 'opacity-100 translate-x-0'
+                      : `opacity-0 ${isEven ? 'translate-x-20' : '-translate-x-20'}`
                   }`}
                   style={{
                     transitionTimingFunction: 'var(--ease-out-expo)',
                     transitionDelay: `${index * 200}ms`,
                   }}
                 >
-                  <div className={`inline-flex items-center justify-center w-14 h-14 rounded-xl gradient-coral mb-6 ${isEven ? 'lg:ml-auto' : ''}`}>
+                  <div
+                    className={`inline-flex items-center justify-center w-14 h-14 rounded-xl gradient-coral mb-6 ${isEven ? 'lg:ml-auto' : ''}`}
+                  >
                     <Icon className="w-7 h-7 text-black" />
                   </div>
                   <h3 className="text-3xl md:text-4xl font-bold text-white mb-5">
@@ -78,7 +85,9 @@ export default function StudioFeatures() {
                 {/* Visual Card */}
                 <div
                   className={`flex-1 w-full max-w-lg transition-all duration-700 ${
-                    isVisible ? 'opacity-100 translate-x-0' : `opacity-0 ${isEven ? '-translate-x-20' : 'translate-x-20'}`
+                    isVisible
+                      ? 'opacity-100 translate-x-0'
+                      : `opacity-0 ${isEven ? '-translate-x-20' : 'translate-x-20'}`
                   }`}
                   style={{
                     transitionTimingFunction: 'var(--ease-out-expo)',
@@ -91,8 +100,11 @@ export default function StudioFeatures() {
                       <div className="relative w-full h-full">
                         {/* Animated circles */}
                         <div className="absolute top-1/4 left-1/4 w-32 h-32 rounded-full bg-[#ff6b6b]/20 blur-2xl animate-pulse" />
-                        <div className="absolute bottom-1/4 right-1/4 w-40 h-40 rounded-full bg-[#ff8e8e]/20 blur-2xl animate-pulse" style={{ animationDelay: '1s' }} />
-                        
+                        <div
+                          className="absolute bottom-1/4 right-1/4 w-40 h-40 rounded-full bg-[#ff8e8e]/20 blur-2xl animate-pulse"
+                          style={{ animationDelay: '1s' }}
+                        />
+
                         {/* Center icon */}
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="w-24 h-24 rounded-2xl bg-white/10 backdrop-blur-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500">

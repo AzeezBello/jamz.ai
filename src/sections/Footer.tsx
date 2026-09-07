@@ -1,10 +1,36 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { footerGroups, legalLinks, type SiteLink } from '@/lib/site-links';
 
-const footerLinks = {
-  Brand: ['About', 'Work at Jamz', 'Blog', 'Pricing'],
-  Hub: ['Support', 'Help', 'Contact Us', 'Community Guidelines'],
-  Legal: ['FAQs', 'Terms of Service', 'Privacy Policy'],
-};
+const linkClass =
+  'text-white/50 text-sm hover:text-white transition-colors duration-200 relative group rounded focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#ff6b6b]';
+
+function FooterLink({ link }: { link: SiteLink }) {
+  const underline = (
+    <span className="absolute -bottom-0.5 left-0 w-0 h-px bg-[#ff6b6b] group-hover:w-full transition-all duration-300" />
+  );
+
+  if (link.internal) {
+    return (
+      <Link to={link.href} className={linkClass}>
+        {link.label}
+        {underline}
+      </Link>
+    );
+  }
+
+  return (
+    <a
+      href={link.href}
+      target={link.href.startsWith('mailto:') ? undefined : '_blank'}
+      rel="noreferrer"
+      className={linkClass}
+    >
+      {link.label}
+      {underline}
+    </a>
+  );
+}
 
 export default function Footer() {
   const footerRef = useRef<HTMLElement>(null);
@@ -18,7 +44,7 @@ export default function Footer() {
           observer.disconnect();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     if (footerRef.current) {
@@ -47,42 +73,41 @@ export default function Footer() {
             }`}
             style={{ transitionTimingFunction: 'var(--ease-out-expo)', transitionDelay: '200ms' }}
           >
-            <a href="#" className="text-3xl font-bold text-white hover:scale-105 inline-block transition-transform">
+            <Link
+              to="/"
+              className="text-3xl font-bold text-white hover:scale-105 inline-block transition-transform"
+            >
               JAMZ
-            </a>
+            </Link>
             <p className="text-white/50 text-sm mt-4 max-w-xs">
               Make any song you can imagine with AI-powered music creation.
             </p>
           </div>
 
           {/* Link Columns */}
-          {Object.entries(footerLinks).map(([category, links], categoryIndex) => (
-            <div
-              key={category}
-              className={`transition-all duration-700 ${
-                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-              }`}
-              style={{
-                transitionTimingFunction: 'var(--ease-out-expo)',
-                transitionDelay: `${300 + categoryIndex * 100}ms`,
-              }}
-            >
-              <h4 className="text-white font-semibold mb-4">{category}</h4>
-              <ul className="space-y-2">
-                {links.map((link) => (
-                  <li key={link}>
-                    <a
-                      href="#"
-                      className="text-white/50 text-sm hover:text-white transition-colors duration-200 relative group"
-                    >
-                      {link}
-                      <span className="absolute -bottom-0.5 left-0 w-0 h-px bg-[#ff6b6b] group-hover:w-full transition-all duration-300" />
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {Object.entries(footerGroups)
+            .filter(([, links]) => links.length > 0)
+            .map(([category, links], categoryIndex) => (
+              <div
+                key={category}
+                className={`transition-all duration-700 ${
+                  isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+                }`}
+                style={{
+                  transitionTimingFunction: 'var(--ease-out-expo)',
+                  transitionDelay: `${300 + categoryIndex * 100}ms`,
+                }}
+              >
+                <h4 className="text-white font-semibold mb-4">{category}</h4>
+                <ul className="space-y-2">
+                  {links.map((link) => (
+                    <li key={link.label}>
+                      <FooterLink link={link} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
         </div>
 
         {/* Bottom Bar */}
@@ -92,19 +117,19 @@ export default function Footer() {
           }`}
           style={{ transitionTimingFunction: 'var(--ease-out-expo)', transitionDelay: '600ms' }}
         >
-          <p className="text-white/40 text-sm">
-            © {new Date().getFullYear()} Jamz, Inc.
-          </p>
+          <p className="text-white/40 text-sm">© {new Date().getFullYear()} Jamz, Inc.</p>
           <div className="flex items-center gap-6">
-            <a href="#" className="text-white/40 text-sm hover:text-white transition-colors">
-              Terms
-            </a>
-            <a href="#" className="text-white/40 text-sm hover:text-white transition-colors">
-              Privacy
-            </a>
-            <a href="#" className="text-white/40 text-sm hover:text-white transition-colors">
-              Cookies
-            </a>
+            {legalLinks.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                target="_blank"
+                rel="noreferrer"
+                className="text-white/40 text-sm hover:text-white transition-colors"
+              >
+                {link.label}
+              </a>
+            ))}
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useStore } from '@/store/useStore';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -9,131 +10,119 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Settings, Library, CreditCard, LogOut, Sparkles } from 'lucide-react';
+import { CreditCard, Library, LogOut, Settings, Sparkles } from 'lucide-react';
 import AuthModal from './modals/AuthModal';
+import { useAuthStore } from '@/store/authStore';
 
-interface UserMenuProps {
-  onOpenDashboard: () => void;
-}
-
-export default function UserMenu({ onOpenDashboard }: UserMenuProps) {
-  const { user, isAuthenticated, logout } = useStore();
+export default function UserMenu() {
+  const navigate = useNavigate();
+  const { session, profile, user, signOut } = useAuthStore();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authTab, setAuthTab] = useState<'login' | 'signup'>('login');
-  
-  const handleLoginClick = () => {
-    setAuthTab('login');
+
+  const openAuth = (tab: 'login' | 'signup') => {
+    setAuthTab(tab);
     setShowAuthModal(true);
   };
-  
-  const handleSignupClick = () => {
-    setAuthTab('signup');
-    setShowAuthModal(true);
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success('Signed out.');
+    navigate('/', { replace: true });
   };
-  
-  const handleLogout = () => {
-    logout();
-  };
-  
-  if (!isAuthenticated || !user) {
+
+  if (!session) {
     return (
       <>
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
-            onClick={handleLoginClick}
+            onClick={() => openAuth('login')}
             className="text-white/70 hover:text-white hover:bg-white/10 text-sm font-medium"
           >
             Sign In
           </Button>
           <Button
-            onClick={handleSignupClick}
+            onClick={() => openAuth('signup')}
             className="gradient-coral text-black font-semibold px-5 py-2 rounded-full hover:opacity-90 transition-opacity"
           >
             Sign Up
           </Button>
         </div>
-        
-        <AuthModal 
-          isOpen={showAuthModal} 
-          onClose={() => setShowAuthModal(false)} 
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
           defaultTab={authTab}
         />
       </>
     );
   }
-  
+
+  const name = profile?.display_name || user?.email?.split('@')[0] || 'You';
+
   return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button 
-            variant="ghost" 
-            className="flex items-center gap-2 text-white hover:bg-white/10"
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="flex items-center gap-2 text-white hover:bg-white/10">
+          <span
+            className="w-8 h-8 rounded-full gradient-coral flex items-center justify-center"
+            aria-hidden="true"
           >
-            <div className="w-8 h-8 rounded-full gradient-coral flex items-center justify-center">
-              <span className="text-black font-semibold text-sm">
-                {user.name.charAt(0).toUpperCase()}
-              </span>
-            </div>
-            <span className="hidden sm:inline text-sm">{user.name}</span>
-          </Button>
-        </DropdownMenuTrigger>
-        
-        <DropdownMenuContent 
-          align="end" 
-          className="w-56 bg-[#0a0a0a] border-white/10 text-white"
-        >
-          <DropdownMenuLabel className="text-white/50">
-            <div className="flex flex-col">
-              <span className="text-white">{user.name}</span>
-              <span className="text-xs">{user.email}</span>
-            </div>
-          </DropdownMenuLabel>
-          
-          <DropdownMenuSeparator className="bg-white/10" />
-          
-          <DropdownMenuItem 
-            onClick={onOpenDashboard}
-            className="cursor-pointer hover:bg-white/10 focus:bg-white/10"
-          >
-            <Library className="w-4 h-4 mr-2" />
-            My Library
-          </DropdownMenuItem>
-          
-          <DropdownMenuItem className="cursor-pointer hover:bg-white/10 focus:bg-white/10">
-            <Sparkles className="w-4 h-4 mr-2" />
-            <span>Credits: {user.credits}</span>
-          </DropdownMenuItem>
-          
-          <DropdownMenuItem className="cursor-pointer hover:bg-white/10 focus:bg-white/10">
-            <CreditCard className="w-4 h-4 mr-2" />
+            <span className="text-black font-semibold text-sm">{name.charAt(0).toUpperCase()}</span>
+          </span>
+          <span className="hidden sm:inline text-sm">{name}</span>
+        </Button>
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent align="end" className="w-56 bg-[#0a0a0a] border-white/10 text-white">
+        <DropdownMenuLabel className="text-white/50">
+          <span className="flex flex-col">
+            <span className="text-white">{name}</span>
+            <span className="text-xs">{user?.email}</span>
+          </span>
+        </DropdownMenuLabel>
+
+        <DropdownMenuSeparator className="bg-white/10" />
+
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <Link to="/dashboard">
+            <Library className="w-4 h-4 mr-2" aria-hidden="true" /> My Library
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <Link to="/billing">
+            <Sparkles className="w-4 h-4 mr-2" aria-hidden="true" />
+            Credits
+            <span className="ml-auto text-xs text-[#ff6b6b]">{profile?.credit_balance ?? 0}</span>
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <Link to="/billing">
+            <CreditCard className="w-4 h-4 mr-2" aria-hidden="true" />
             Subscription
-            <span className="ml-auto text-xs text-[#ff6b6b] capitalize">{user.plan}</span>
-          </DropdownMenuItem>
-          
-          <DropdownMenuItem className="cursor-pointer hover:bg-white/10 focus:bg-white/10">
-            <Settings className="w-4 h-4 mr-2" />
-            Settings
-          </DropdownMenuItem>
-          
-          <DropdownMenuSeparator className="bg-white/10" />
-          
-          <DropdownMenuItem 
-            onClick={handleLogout}
-            className="cursor-pointer hover:bg-white/10 focus:bg-white/10 text-[#ff6b6b]"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Log out
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-      
-      <AuthModal 
-        isOpen={showAuthModal} 
-        onClose={() => setShowAuthModal(false)} 
-        defaultTab={authTab}
-      />
-    </>
+            <span className="ml-auto text-xs text-[#ff6b6b] capitalize">
+              {profile?.plan_id ?? 'free'}
+            </span>
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <Link to="/settings">
+            <Settings className="w-4 h-4 mr-2" aria-hidden="true" /> Settings
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator className="bg-white/10" />
+
+        <DropdownMenuItem
+          onClick={handleSignOut}
+          className="cursor-pointer text-[#ff6b6b] focus:text-[#ff6b6b]"
+        >
+          <LogOut className="w-4 h-4 mr-2" aria-hidden="true" /> Log out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

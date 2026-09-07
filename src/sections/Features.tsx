@@ -4,33 +4,39 @@ import { Music, Share2, Sliders, Copyright, Layout, Sparkles } from 'lucide-reac
 const features = [
   {
     icon: Sparkles,
-    title: "10 free songs, daily",
-    description: "Turn any moment into customized music instantly — from your commute to inside jokes. Express what words can't. Free forever, no subscription needed.",
+    title: '10 free songs, daily',
+    description:
+      "Turn any moment into customized music instantly — from your commute to inside jokes. Express what words can't. Free forever, no subscription needed.",
   },
   {
     icon: Music,
-    title: "Free AI music generator",
-    description: "Discover what's possible when anyone can make music. Access the market-leading AI song generator to explore millions of songs—remixes, jokes, and raw emotion.",
+    title: 'Free AI music generator',
+    description:
+      "Discover what's possible when anyone can make music. Access the market-leading AI song generator to explore millions of songs—remixes, jokes, and raw emotion.",
   },
   {
     icon: Share2,
-    title: "Share it with the world",
-    description: "Make music that matters to you, then share it with people who'll feel it too. From your inner circle to millions of music fans, your next track can go far.",
+    title: 'Share it with the world',
+    description:
+      "Make music that matters to you, then share it with people who'll feel it too. From your inner circle to millions of music fans, your next track can go far.",
   },
   {
     icon: Sliders,
-    title: "Granular creation controls",
-    description: "Steer your style with Personas, Inspo, exclusions, and vocal gender. Or get even more granular and experiment with weirdness and style sliders.",
+    title: 'Granular creation controls',
+    description:
+      'Steer your style with Personas, Inspo, exclusions, and vocal gender. Or get even more granular and experiment with weirdness and style sliders.',
   },
   {
     icon: Copyright,
-    title: "Commercial rights to your songs",
-    description: "Songs you create as a paid Jamz subscriber are yours to keep and do whatever you want with them, from using them as background music in videos to publishing an album.",
+    title: 'Commercial rights to your songs',
+    description:
+      'Songs you create as a paid Jamz subscriber are yours to keep and do whatever you want with them, from using them as background music in videos to publishing an album.',
   },
   {
     icon: Layout,
-    title: "Your complete creative workspace",
-    description: "Jamz Studio is a first-of-its-kind web-based generative audio workstation that combines traditional DAW functionality with AI-powered music creation.",
+    title: 'Your complete creative workspace',
+    description:
+      'Jamz Studio is a first-of-its-kind web-based generative audio workstation that combines traditional DAW functionality with AI-powered music creation.',
   },
 ];
 
@@ -46,7 +52,7 @@ export default function Features() {
           observer.disconnect();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     if (sectionRef.current) {

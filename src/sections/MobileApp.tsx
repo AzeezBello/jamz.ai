@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { appStoreLinks } from '@/lib/site-links';
 import { Star, Apple, Smartphone } from 'lucide-react';
 
 export default function MobileApp() {
@@ -14,7 +15,7 @@ export default function MobileApp() {
           observer.disconnect();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     if (sectionRef.current) {
@@ -75,7 +76,9 @@ export default function MobileApp() {
                       className="w-4 h-4 text-yellow-400"
                       fill="currentColor"
                       style={{
-                        animation: isVisible ? `scale-in 0.2s var(--ease-elastic) ${800 + i * 50}ms forwards` : 'none',
+                        animation: isVisible
+                          ? `scale-in 0.2s var(--ease-elastic) ${800 + i * 50}ms forwards`
+                          : 'none',
                         opacity: 0,
                       }}
                     />
@@ -97,10 +100,32 @@ export default function MobileApp() {
               </div>
 
               {/* Download Button */}
-              <Button className="w-full bg-white text-black hover:bg-white/90 font-semibold flex items-center justify-center gap-2">
-                <Apple className="w-5 h-5" />
-                Download on iPhone
-              </Button>
+              {appStoreLinks.ios ? (
+                <Button
+                  asChild
+                  className="w-full bg-white text-black hover:bg-white/90 font-semibold"
+                >
+                  <a
+                    href={appStoreLinks.ios}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-center gap-2"
+                  >
+                    <Apple className="w-5 h-5" aria-hidden="true" />
+                    Download on iPhone
+                  </a>
+                </Button>
+              ) : (
+                // No store listing configured yet; say so rather than
+                // shipping a button that does nothing when tapped.
+                <Button
+                  disabled
+                  className="w-full bg-white/10 text-white/50 font-semibold flex items-center justify-center gap-2"
+                >
+                  <Apple className="w-5 h-5" aria-hidden="true" />
+                  Coming soon
+                </Button>
+              )}
             </div>
           </div>
 
@@ -130,7 +155,9 @@ export default function MobileApp() {
                       className="w-4 h-4 text-yellow-400"
                       fill="currentColor"
                       style={{
-                        animation: isVisible ? `scale-in 0.2s var(--ease-elastic) ${900 + i * 50}ms forwards` : 'none',
+                        animation: isVisible
+                          ? `scale-in 0.2s var(--ease-elastic) ${900 + i * 50}ms forwards`
+                          : 'none',
                         opacity: 0,
                       }}
                     />
@@ -152,10 +179,32 @@ export default function MobileApp() {
               </div>
 
               {/* Download Button */}
-              <Button className="w-full bg-white text-black hover:bg-white/90 font-semibold flex items-center justify-center gap-2">
-                <Smartphone className="w-5 h-5" />
-                Download on Android
-              </Button>
+              {appStoreLinks.android ? (
+                <Button
+                  asChild
+                  className="w-full bg-white text-black hover:bg-white/90 font-semibold"
+                >
+                  <a
+                    href={appStoreLinks.android}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-center gap-2"
+                  >
+                    <Smartphone className="w-5 h-5" aria-hidden="true" />
+                    Download on Android
+                  </a>
+                </Button>
+              ) : (
+                // No store listing configured yet; say so rather than
+                // shipping a button that does nothing when tapped.
+                <Button
+                  disabled
+                  className="w-full bg-white/10 text-white/50 font-semibold flex items-center justify-center gap-2"
+                >
+                  <Smartphone className="w-5 h-5" aria-hidden="true" />
+                  Coming soon
+                </Button>
+              )}
             </div>
           </div>
         </div>
