@@ -229,6 +229,19 @@ begin
     raise exception 'FAIL: a completed job was refunded';
   end if;
 
+  ---------------------------------------------------------------------------
+  raise notice '10. claiming from an empty queue yields no row';
+  ---------------------------------------------------------------------------
+  -- A bare composite return gives a row of NULLs here, which PostgREST turns
+  -- into a truthy object, so the worker never stops looping. It must be zero
+  -- rows.
+  perform set_config('request.jwt.claims', '', true);
+  update generation_jobs set status = 'completed' where status in ('queued', 'running');
+
+  if (select count(*) from claim_generation_job('idle-worker', 60)) <> 0 then
+    raise exception 'FAIL: claiming an empty queue returned a row';
+  end if;
+
   raise notice 'CREDIT AND JOB INVARIANTS HELD';
 end;
 $$;

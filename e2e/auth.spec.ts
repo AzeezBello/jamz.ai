@@ -8,10 +8,38 @@ test.describe('authentication', () => {
     await expect(page.getByRole('heading', { name: 'My Dashboard' })).toBeVisible();
   });
 
+  test('each entry point opens the form it advertises', async ({ page }) => {
+    // Regression: AuthModal seeded its tab with useState(defaultTab), which
+    // ignores later prop changes, so opening Sign In first left Sign Up
+    // showing the sign-in form — on the primary conversion path.
+    const mainNav = page.getByRole('navigation', { name: 'Main' });
+    const dialog = page.getByRole('dialog');
+
+    await page.goto('/');
+    await mainNav.getByRole('button', { name: 'Sign In', exact: true }).click();
+    await expect(dialog.getByRole('tab', { name: 'Sign In' })).toHaveAttribute(
+      'data-state',
+      'active',
+    );
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+
+    await mainNav.getByRole('button', { name: 'Sign Up', exact: true }).click();
+    await expect(dialog.getByRole('tab', { name: 'Sign Up' })).toHaveAttribute(
+      'data-state',
+      'active',
+    );
+    await expect(dialog.getByLabel('Name')).toBeVisible();
+  });
+
   test('a wrong password is rejected', async ({ page }) => {
     // The old build accepted any credentials at all.
     await page.goto('/');
-    await page.getByRole('button', { name: 'Sign In' }).click();
+    await page
+      .getByRole('navigation', { name: 'Main' })
+      .getByRole('button', { name: 'Sign In', exact: true })
+      .click();
 
     const dialog = page.getByRole('dialog');
     await dialog.getByLabel('Email').fill(uniqueEmail());

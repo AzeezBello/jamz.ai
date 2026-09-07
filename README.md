@@ -223,9 +223,18 @@ complete, a downloadable file verified as a real RIFF/WAVE that is not silence,
 private songs invisible to other users and to anonymous visitors, cancellation
 refunding, `402` on insufficient credits, and the worker refusing a user token.
 
-**End-to-end** (`npm run test:e2e`) — the same journeys through a real browser:
-signup, generation, cancellation with refund, playback, download, billing and
-logout. Needs a running stack plus edge functions; see `e2e/README.md`.
+**End-to-end** (`npm run test:e2e:local`) — the same journeys through a real
+browser: signup, generation, cancellation with refund, playback, download,
+billing and logout. `scripts/e2e-local.sh` turns off email confirmation for the
+run and restores it afterwards on any exit path, because signup has to yield a
+session without a mail round-trip. Production keeps confirmations on. See
+`e2e/README.md`.
+
+Every layer earns its place — each of these found defects the others could not
+see. Notably, the browser suite caught a worker that spun on an empty queue
+(see `20260906000900_claim_returns_setof.sql`), which no amount of type
+checking would have flagged: the offending value was a perfectly well-typed
+object full of nulls.
 
 ---
 

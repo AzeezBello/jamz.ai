@@ -23,7 +23,8 @@
     "functions:deploy": "supabase functions deploy",
     "verify": "npm run typecheck && npm run lint && npm run test",
     "db:test": "bash scripts/db-test.sh",
-    "test:backend": "node scripts/smoke-backend.mjs"
+    "test:backend": "node scripts/smoke-backend.mjs",
+    "test:e2e:local": "bash scripts/e2e-local.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

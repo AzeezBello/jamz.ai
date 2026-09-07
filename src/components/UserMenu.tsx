@@ -49,7 +49,14 @@ export default function UserMenu() {
             Sign Up
           </Button>
         </div>
+        {/*
+          Keyed on the tab so switching between Sign In and Sign Up remounts
+          the dialog. AuthModal seeds its tab with useState(defaultTab), which
+          ignores later prop changes — without this, clicking "Sign Up" opened
+          the modal on the sign-in form.
+        */}
         <AuthModal
+          key={authTab}
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
           defaultTab={authTab}

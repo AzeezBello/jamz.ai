@@ -7,9 +7,18 @@ export function uniqueEmail(): string {
 
 export const TEST_PASSWORD = 'e2e-password-123!';
 
+/**
+ * The landing page carries several sign-up affordances — the nav, each pricing
+ * card, the social gallery — with near-identical accessible names, so these
+ * locators are scoped to the nav rather than matching on name alone.
+ */
+function nav(page: Page) {
+  return page.getByRole('navigation', { name: 'Main' });
+}
+
 export async function signUp(page: Page, email = uniqueEmail(), name = 'E2E Tester') {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Sign Up' }).click();
+  await nav(page).getByRole('button', { name: 'Sign Up', exact: true }).click();
 
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Name').fill(name);
@@ -19,13 +28,15 @@ export async function signUp(page: Page, email = uniqueEmail(), name = 'E2E Test
 
   // With confirmations disabled locally the session lands immediately; with
   // them on, the run needs a mail catcher (see e2e/README.md).
-  await expect(page.getByRole('button', { name: /E2E Tester/ })).toBeVisible({ timeout: 20_000 });
+  await expect(nav(page).getByRole('button', { name: /E2E Tester/ })).toBeVisible({
+    timeout: 20_000,
+  });
   return { email, name };
 }
 
 export async function signIn(page: Page, email: string, password = TEST_PASSWORD) {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Sign In' }).click();
+  await nav(page).getByRole('button', { name: 'Sign In', exact: true }).click();
 
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Email').fill(email);
@@ -35,12 +46,12 @@ export async function signIn(page: Page, email: string, password = TEST_PASSWORD
 }
 
 export async function signOut(page: Page) {
-  await page
+  await nav(page)
     .getByRole('button', { name: /E2E Tester|@/ })
     .first()
     .click();
   await page.getByRole('menuitem', { name: 'Log out' }).click();
-  await expect(page.getByRole('button', { name: 'Sign Up' })).toBeVisible();
+  await expect(nav(page).getByRole('button', { name: 'Sign Up', exact: true })).toBeVisible();
 }
 
 /** Reads the credit balance shown in the header chip on /dashboard. */
@@ -56,6 +67,8 @@ export async function readCredits(page: Page): Promise<number> {
 export async function generateSong(page: Page, prompt: string) {
   await page.goto('/');
   await page.getByLabel('Describe the song you want').fill(prompt);
-  await page.getByRole('button', { name: 'Create' }).click();
+  // `exact` matters: the quick-prompt chips are buttons whose labels start
+  // with "Create an upbeat pop song…", so a substring match is ambiguous.
+  await page.getByRole('button', { name: 'Create', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('Creating your song');
 }

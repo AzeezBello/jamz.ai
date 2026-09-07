@@ -5,7 +5,9 @@
 // storage are exercised end to end. Swap this for a hosted model by
 // implementing the GenerationProvider interface in providers.ts.
 
-const SAMPLE_RATE = 32000;
+// 24 kHz is ample for this material and costs 25% less than 32 kHz across
+// every voice.
+const SAMPLE_RATE = 24000;
 
 /** xorshift32 — same prompt in, same song out. */
 function seededRandom(seed: number) {
@@ -118,16 +120,22 @@ export function synthesize({ prompt, seconds, instrumental }: SynthOptions): Syn
   };
 
   // --- Harmony: a sustained triad pad per bar -------------------------------
+  //
+  // The pad is the most expensive voice (three chord tones, three partials
+  // each, every sample) and it repeats: a four-chord progression over N bars
+  // renders the same four bars again and again. Rendering each distinct chord
+  // once and copying it into place turns O(bars) synthesis into O(1), which is
+  // what keeps a full-length track inside the runtime's CPU budget.
   const barCount = Math.ceil(total / bar);
-  for (let b = 0; b < barCount; b++) {
-    const degree = progression[b % progression.length];
-    const chord = [0, 2, 4].map((i) => degreeToMidi(root + 12, degree + i));
-    const start = b * bar;
-    const dur = Math.min(bar, total - start);
-    if (dur <= 0) break;
+  const barSamples = Math.floor(bar * SAMPLE_RATE);
+  const padCache = new Map<number, Float32Array>();
 
-    const offset = Math.floor(start * SAMPLE_RATE);
-    const length = Math.floor(dur * SAMPLE_RATE);
+  const renderPadBar = (degree: number): Float32Array => {
+    const cached = padCache.get(degree);
+    if (cached) return cached;
+
+    const buffer = new Float32Array(barSamples);
+    const chord = [0, 2, 4].map((i) => degreeToMidi(root + 12, degree + i));
 
     for (const midi of chord) {
       const freq = midiToHz(midi);
@@ -135,13 +143,25 @@ export function synthesize({ prompt, seconds, instrumental }: SynthOptions): Syn
       const increment = (freq * detune) / SAMPLE_RATE;
       let phase = 0;
 
-      for (let i = 0; i < length; i++) {
-        const env = adsr(i / SAMPLE_RATE, dur, 0.25, 0.3, 0.7, 0.4) * 0.11;
-        out[offset + i] += env * (osc(phase) + 0.35 * osc(phase * 2) + 0.18 * osc(phase * 3));
+      for (let i = 0; i < barSamples; i++) {
+        const env = adsr(i / SAMPLE_RATE, bar, 0.25, 0.3, 0.7, 0.4) * 0.11;
+        buffer[i] += env * (osc(phase) + 0.35 * osc(phase * 2) + 0.18 * osc(phase * 3));
         phase += increment;
         if (phase >= 1) phase -= 1;
       }
     }
+
+    padCache.set(degree, buffer);
+    return buffer;
+  };
+
+  for (let b = 0; b < barCount; b++) {
+    const offset = Math.floor(b * bar * SAMPLE_RATE);
+    const length = Math.min(barSamples, n - offset);
+    if (length <= 0) break;
+
+    const padBar = renderPadBar(progression[b % progression.length]);
+    for (let i = 0; i < length; i++) out[offset + i] += padBar[i];
   }
 
   // --- Bass: root of the bar, one note per beat -----------------------------

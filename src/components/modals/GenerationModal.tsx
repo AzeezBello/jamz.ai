@@ -23,10 +23,10 @@ const STEPS = [
  */
 export default function GenerationModal() {
   const navigate = useNavigate();
-  const { job, lastSong, error, cancel, dismiss } = useGenerationStore();
+  const { job, lastSong, error, dismissed, cancel, dismiss } = useGenerationStore();
   const play = usePlayerStore((s) => s.play);
 
-  const open = Boolean(job) || Boolean(error);
+  const open = (Boolean(job) && !dismissed) || Boolean(error);
 
   // A cancelled job needs no further attention; close it out.
   useEffect(() => {

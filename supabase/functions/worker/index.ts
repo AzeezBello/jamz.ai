@@ -44,7 +44,9 @@ Deno.serve(async (req) => {
     }
 
     const job = Array.isArray(claimed) ? claimed[0] : claimed;
-    if (!job) break; // queue drained
+    // Belt and braces: a NULL composite from Postgres serialises as an object
+    // full of nulls, which is truthy. Test the id, not the object.
+    if (!job?.id) break; // queue drained
 
     try {
       await runJob(db, job);

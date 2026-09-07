@@ -13,6 +13,15 @@ export function getAudioElement(): HTMLAudioElement {
     element.preload = 'metadata';
     // Signed URLs are same-origin to Supabase storage; anonymous is correct.
     element.crossOrigin = 'anonymous';
+
+    // `new Audio()` is detached from the document, which plays fine but is
+    // invisible to devtools and to anything inspecting the page. Attaching it
+    // costs nothing and makes what is actually playing observable.
+    if (typeof document !== 'undefined') {
+      element.setAttribute('data-jamz-player', '');
+      element.hidden = true;
+      document.body.appendChild(element);
+    }
   }
   return element;
 }
@@ -22,6 +31,7 @@ export function resetAudioElement() {
   if (element) {
     element.pause();
     element.src = '';
+    element.remove();
   }
   element = null;
 }
