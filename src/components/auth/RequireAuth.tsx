@@ -25,7 +25,13 @@ export default function RequireAuth() {
   }
 
   if (!session) {
-    return <Navigate to="/" replace state={{ from: location.pathname, requireAuth: true }} />;
+    return (
+      <Navigate
+        to="/"
+        replace
+        state={{ from: `${location.pathname}${location.search}`, requireAuth: true }}
+      />
+    );
   }
 
   return <Outlet />;
