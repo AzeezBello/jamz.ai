@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { setRememberSession, supabase } from '@/lib/supabase';
 import { env } from '@/lib/env';
 import { fetchProfile, updateProfile } from '@/lib/api';
 import { ApiError, type Profile } from '@/lib/types';
@@ -19,7 +19,7 @@ interface AuthState {
     password: string,
     displayName: string,
   ) => Promise<{ needsConfirmation: boolean }>;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   signInWithOAuth: (provider: 'google' | 'github') => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
@@ -81,8 +81,9 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     return { needsConfirmation: !data.session };
   },
 
-  signIn: async (email, password) => {
+  signIn: async (email, password, rememberMe = true) => {
     set({ error: null });
+    setRememberSession(rememberMe);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new ApiError('invalid_credentials', error.message);
   },

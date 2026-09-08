@@ -7,10 +7,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Lock, Mail, MailCheck, User } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Lock, Mail, MailCheck, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/authStore';
 
@@ -31,11 +32,16 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const reset = () => {
     setPassword('');
+    setShowLoginPassword(false);
+    setShowSignupPassword(false);
     setError('');
     setLoading(false);
   };
@@ -54,7 +60,7 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
     setError('');
     setLoading(true);
     try {
-      await signIn(email, password);
+      await signIn(email, password, rememberMe);
       toast.success('Welcome back.');
       handleClose();
     } catch (err) {
@@ -133,7 +139,12 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
     </div>
   );
 
-  const passwordField = (id: string, autoComplete: string) => (
+  const passwordField = (
+    id: string,
+    autoComplete: string,
+    visible: boolean,
+    onToggle: () => void,
+  ) => (
     <div className="space-y-2">
       <Label htmlFor={id} className="text-white/70">
         Password
@@ -145,14 +156,22 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
         />
         <Input
           id={id}
-          type="password"
+          type={visible ? 'text' : 'password'}
           autoComplete={autoComplete}
           placeholder="••••••••"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/30"
+          className="pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder:text-white/30"
           required
         />
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-label={visible ? 'Hide password' : 'Show password'}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
+        >
+          {visible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+        </button>
       </div>
     </div>
   );
@@ -241,7 +260,18 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
               <TabsContent value="login">
                 <form onSubmit={handleLogin} className="space-y-4 mt-4">
                   {emailField('login-email')}
-                  {passwordField('login-password', 'current-password')}
+                  {passwordField('login-password', 'current-password', showLoginPassword, () =>
+                    setShowLoginPassword((visible) => !visible),
+                  )}
+
+                  <label className="flex items-center gap-2 text-white/50 text-sm cursor-pointer">
+                    <Checkbox
+                      checked={rememberMe}
+                      onCheckedChange={(checked) => setRememberMe(checked === true)}
+                      className="border-white/30 data-[state=checked]:bg-[#ff6b6b] data-[state=checked]:border-[#ff6b6b] data-[state=checked]:text-black"
+                    />
+                    Remember me
+                  </label>
 
                   <button
                     type="button"
@@ -294,7 +324,9 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
                   </div>
 
                   {emailField('signup-email')}
-                  {passwordField('signup-password', 'new-password')}
+                  {passwordField('signup-password', 'new-password', showSignupPassword, () =>
+                    setShowSignupPassword((visible) => !visible),
+                  )}
 
                   <p className="text-white/30 text-xs">
                     At least {MIN_PASSWORD_LENGTH} characters. By signing up you agree to our terms
