@@ -33,7 +33,7 @@ export default function AppLayout() {
         Skip to content
       </a>
       <Navigation />
-      <main id="main" className={hasPlayer ? 'pb-24' : ''}>
+      <main id="main" className={`${session ? 'md:pl-64' : ''} ${hasPlayer ? 'pb-24' : ''}`}>
         <Outlet />
       </main>
       <Footer />

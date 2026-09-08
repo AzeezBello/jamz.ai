@@ -59,7 +59,13 @@ export interface GenerationJob {
   user_id: string;
   song_id: string | null;
   prompt: string;
-  params: { style?: string; instrumental?: boolean; seconds?: number };
+  params: {
+    lyrics?: string;
+    style?: string;
+    thumbnailStyle?: string;
+    instrumental?: boolean;
+    seconds?: number;
+  };
   status: JobStatus;
   progress: number;
   status_message: string;

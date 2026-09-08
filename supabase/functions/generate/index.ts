@@ -16,7 +16,9 @@ Deno.serve((req) =>
     const body = await req.json().catch(() => ({}));
 
     const prompt = String(body.prompt ?? '').trim();
+    const lyrics = String(body.lyrics ?? '').trim();
     const style = String(body.style ?? '').trim();
+    const thumbnailStyle = String(body.thumbnailStyle ?? '').trim();
     const instrumental = Boolean(body.instrumental);
     const seconds = Math.min(Math.max(Number(body.seconds) || 45, 15), MAX_SECONDS);
     const projectId = body.projectId ?? null;
@@ -28,7 +30,7 @@ Deno.serve((req) =>
 
     const { data, error } = await client.rpc('enqueue_generation', {
       p_prompt: prompt,
-      p_params: { style, instrumental, seconds },
+      p_params: { lyrics, style, thumbnailStyle, instrumental, seconds },
       p_project_id: projectId,
       p_idempotency_key: idempotencyKey,
     });

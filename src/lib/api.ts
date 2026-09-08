@@ -240,7 +240,9 @@ export async function getAudioUrl(songId: string, download = false): Promise<str
 
 export interface GenerationOptions {
   prompt: string;
+  lyrics?: string;
   style?: string;
+  thumbnailStyle?: string;
   instrumental?: boolean;
   seconds?: number;
   idempotencyKey?: string;

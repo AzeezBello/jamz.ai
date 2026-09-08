@@ -89,6 +89,7 @@ async function runJob(db: any, job: any) {
     output = await provider.generate(
       {
         prompt: job.prompt,
+        lyrics: String(params.lyrics ?? ''),
         style: String(params.style ?? ''),
         seconds: Number(params.seconds ?? 45),
         instrumental: Boolean(params.instrumental),
@@ -124,7 +125,7 @@ async function runJob(db: any, job: any) {
     p_storage_path: path,
     p_bytes: output.bytes.byteLength,
     p_format: output.extension,
-    p_cover_url: coverForJob(job.id),
+    p_cover_url: coverForJob(job.id, String(params.thumbnailStyle ?? '')),
     p_model: provider.id,
   });
 
@@ -136,8 +137,8 @@ async function runJob(db: any, job: any) {
 
 // Stand-in cover art until a cover-generation model is wired up: stable per
 // job, so a song keeps the same artwork across reloads.
-function coverForJob(jobId: string): string {
+function coverForJob(jobId: string, thumbnailStyle: string): string {
   let hash = 0;
-  for (const ch of jobId) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  for (const ch of `${jobId}:${thumbnailStyle}`) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
   return `/images/song-${(hash % 8) + 1}.jpg`;
 }

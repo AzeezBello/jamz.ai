@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,6 +48,7 @@ import { usePlayerStore } from '@/store/playerStore';
 import { formatCount, formatDuration, formatRelative } from '@/lib/format';
 import { copyShareLink, downloadSong } from '@/lib/download';
 import type { Song, SongVisibility } from '@/lib/types';
+import CreateStudio from '@/components/studio/CreateStudio';
 
 const VISIBILITY_ICON: Record<SongVisibility, typeof Lock> = {
   private: Lock,
@@ -74,6 +75,11 @@ export default function DashboardPage() {
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState<'library' | 'discover'>('library');
   const [pendingDelete, setPendingDelete] = useState<Song | null>(null);
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get('tab') === 'discover') setTab('discover');
+  }, [searchParams]);
 
   useEffect(() => {
     void loadMySongs();
@@ -127,6 +133,8 @@ export default function DashboardPage() {
           </Link>
         </div>
       </div>
+
+      <CreateStudio />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <StatCard icon={Music} label="Total songs" value={String(stats.songs)} />

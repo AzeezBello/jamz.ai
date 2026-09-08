@@ -11,9 +11,6 @@ export function getAudioElement(): HTMLAudioElement {
   if (!element) {
     element = new Audio();
     element.preload = 'metadata';
-    // Signed URLs are same-origin to Supabase storage; anonymous is correct.
-    element.crossOrigin = 'anonymous';
-
     // `new Audio()` is detached from the document, which plays fine but is
     // invisible to devtools and to anything inspecting the page. Attaching it
     // costs nothing and makes what is actually playing observable.

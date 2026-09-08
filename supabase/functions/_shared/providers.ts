@@ -9,6 +9,7 @@ import { synthesize } from './synth.ts';
 
 export interface GenerationRequest {
   prompt: string;
+  lyrics: string;
   style: string;
   seconds: number;
   instrumental: boolean;
@@ -54,7 +55,7 @@ const mockProvider: GenerationProvider = {
     }
 
     const result = synthesize({
-      prompt: `${req.prompt} ${req.style}`.trim(),
+      prompt: `${req.prompt} ${req.style} ${req.lyrics}`.trim(),
       seconds: req.seconds,
       instrumental: req.instrumental,
     });

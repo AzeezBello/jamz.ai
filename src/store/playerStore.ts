@@ -89,6 +89,7 @@ export const usePlayerStore = create<PlayerState>()(
             if (token !== loadToken) return; // superseded by a newer play()
 
             el.src = url;
+            el.load();
             el.volume = get().muted ? 0 : get().volume;
             el.muted = get().muted;
             await el.play();
