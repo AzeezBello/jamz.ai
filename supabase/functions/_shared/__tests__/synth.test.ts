@@ -59,6 +59,25 @@ describe('synthesize', () => {
     expect(again.wav.length).toBe(result.wav.length);
   });
 
+  it('weirdness changes the arrangement', () => {
+    // The slider must be audible, not just recorded on the job.
+    const tame = synthesize({
+      prompt: 'a steady pop song',
+      seconds: 8,
+      instrumental: false,
+      seed: 's',
+      weirdness: 0,
+    });
+    const wild = synthesize({
+      prompt: 'a steady pop song',
+      seconds: 8,
+      instrumental: false,
+      seed: 's',
+      weirdness: 100,
+    });
+    expect(Buffer.from(tame.wav).equals(Buffer.from(wild.wav))).toBe(false);
+  });
+
   it('gives a different take for a different seed', () => {
     // A variation must not be a byte-identical copy of the original.
     const a = synthesize({

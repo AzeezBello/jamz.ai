@@ -82,6 +82,11 @@ export interface SynthOptions {
    * take rather than a byte-identical copy.
    */
   seed?: string;
+  /**
+   * 0-100. Widens the melodic range and thins the rests, so the control
+   * changes what you hear instead of only being recorded.
+   */
+  weirdness?: number;
 }
 
 export interface SynthResult {
@@ -94,7 +99,13 @@ export interface SynthResult {
 
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
-export function synthesize({ prompt, seconds, instrumental, seed }: SynthOptions): SynthResult {
+export function synthesize({
+  prompt,
+  seconds,
+  instrumental,
+  seed,
+  weirdness = 50,
+}: SynthOptions): SynthResult {
   const rand = seededRandom(hashString(seed ? `${prompt}::${seed}` : prompt));
 
   const isMinor = /sad|melanchol|dark|goth|moody|lo-?fi|rain|lonely|heart/i.test(prompt)
@@ -199,9 +210,11 @@ export function synthesize({ prompt, seconds, instrumental, seed }: SynthOptions
   let degree = 0;
   for (let step = 0; step * (beat / 2) < total; step++) {
     const start = step * (beat / 2);
-    if (rand() < 0.28) continue; // rests keep it from droning
-    degree += Math.floor(rand() * 5) - 2;
-    degree = Math.max(-2, Math.min(9, degree));
+    // Rests thin out and leaps widen as weirdness climbs.
+    if (rand() < 0.34 - (weirdness / 100) * 0.18) continue;
+    const spread = 2 + Math.round((weirdness / 100) * 4);
+    degree += Math.floor(rand() * (spread * 2 + 1)) - spread;
+    degree = Math.max(-4, Math.min(11, degree));
     const midi = degreeToMidi(root + 24, degree);
     const freq = midiToHz(midi);
     const dur = Math.min((beat / 2) * 0.85, total - start);

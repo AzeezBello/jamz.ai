@@ -23,7 +23,7 @@ import LibraryToolbar from '@/components/dashboard/LibraryToolbar';
 import BulkActionBar from '@/components/dashboard/BulkActionBar';
 import SongTable from '@/components/dashboard/SongTable';
 import SongCard from '@/components/SongCard';
-import ProjectSidebar from '@/components/dashboard/ProjectSidebar';
+import WorkspacePanel from '@/components/dashboard/WorkspacePanel';
 import EditSongDialog from '@/components/dashboard/EditSongDialog';
 import { useAuthStore } from '@/store/authStore';
 import { useLibraryStore } from '@/store/libraryStore';
@@ -125,7 +125,16 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <CreateStudio />
+      {/* Composer and projects side by side, as in the reference: the brief on
+          the left, where it gets filed on the right. */}
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)] mb-8">
+        <CreateStudio />
+        <div className="min-w-0">
+          <h2 className="text-sm font-medium text-white/50 mb-3">Projects</h2>
+          <WorkspacePanel />
+        </div>
+      </div>
+
       <GenerationActivity />
 
       <div data-tour="library-stats" className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -135,13 +144,7 @@ export default function DashboardPage() {
         <StatCard icon={Globe} label="Public" value={String(stats?.public_count ?? 0)} />
       </div>
 
-      <div className="grid lg:grid-cols-[220px_1fr] gap-6 items-start">
-        <aside
-          className={`hidden lg:block sticky top-24 ${owned ? '' : 'opacity-40 pointer-events-none'}`}
-        >
-          <ProjectSidebar />
-        </aside>
-
+      <div>
         <div className="min-w-0">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
             <Tabs value={tab} onValueChange={(value) => setTab(value as 'library' | 'discover')}>

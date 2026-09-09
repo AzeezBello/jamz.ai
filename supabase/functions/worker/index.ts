@@ -94,6 +94,9 @@ async function runJob(db: any, job: any) {
         seconds: Number(params.seconds ?? 45),
         instrumental: Boolean(params.instrumental),
         seed: String(params.seed ?? job.id),
+        weirdness: Number(params.weirdness ?? 50),
+        styleInfluence: Number(params.styleInfluence ?? 50),
+        vocalGender: String(params.vocalGender ?? 'any'),
       },
       onProgress,
     );

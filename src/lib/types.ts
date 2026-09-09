@@ -5,6 +5,7 @@ export type JobStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancell
 
 export interface Plan {
   id: PlanId;
+  models: string[];
   name: string;
   description: string;
   sort_order: number;
@@ -36,6 +37,29 @@ export interface Profile {
   created_at: string;
 }
 
+export type ReferenceKind = 'audio' | 'voice' | 'inspo';
+
+export interface ReferenceUpload {
+  id: string;
+  kind: ReferenceKind;
+  filename: string;
+  storage_path: string;
+  bytes: number;
+  created_at: string;
+}
+
+export interface ComposerSettings {
+  title?: string;
+  model?: string;
+  style?: string;
+  vocalGender?: 'any' | 'male' | 'female';
+  weirdness?: number;
+  styleInfluence?: number;
+  instrumental?: boolean;
+  seconds?: number;
+  referenceIds?: string[];
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -59,6 +83,7 @@ export interface Song {
   like_count: number;
   commercial_use: boolean;
   model_version: string;
+  settings?: ComposerSettings;
   created_at: string;
   updated_at?: string;
   /** Joined from public_profiles; absent on rows the viewer cannot resolve. */

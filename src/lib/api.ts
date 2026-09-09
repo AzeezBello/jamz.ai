@@ -11,6 +11,8 @@ import {
   type PlanId,
   type Profile,
   type Project,
+  type ReferenceKind,
+  type ReferenceUpload,
   type Song,
   type SongVisibility,
   type Subscription,
@@ -416,6 +418,69 @@ export async function moveSongsToProject(
 }
 
 // ---------------------------------------------------------------------------
+// Reference uploads
+// ---------------------------------------------------------------------------
+
+/** 25 MB — comfortably more than a reference clip needs. */
+export const MAX_REFERENCE_BYTES = 25 * 1024 * 1024;
+
+const ACCEPTED_AUDIO = ['audio/wav', 'audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/x-m4a'];
+
+/**
+ * Stores a reference clip against the user.
+ *
+ * The generator does not condition on these yet — the composer says so. They
+ * are stored properly now so nothing has to be migrated when it does.
+ */
+export async function uploadReference(file: File, kind: ReferenceKind): Promise<ReferenceUpload> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new ApiError('not_authenticated', 'Sign in to continue.');
+
+  if (file.size > MAX_REFERENCE_BYTES) {
+    throw new ApiError('file_too_large', 'That file is larger than 25 MB.');
+  }
+  if (kind !== 'inspo' && file.type && !ACCEPTED_AUDIO.includes(file.type)) {
+    throw new ApiError('unsupported_type', `${file.type || 'That file'} is not an audio file.`);
+  }
+
+  const path = `${user.id}/${crypto.randomUUID()}-${file.name.replace(/[^\w.-]+/g, '_')}`;
+  const { error: uploadError } = await supabase.storage
+    .from('uploads')
+    .upload(path, file, { contentType: file.type || 'application/octet-stream' });
+
+  if (uploadError) throw new ApiError('upload_failed', uploadError.message);
+
+  const { data, error } = await supabase
+    .from('reference_uploads')
+    .insert({
+      user_id: user.id,
+      kind,
+      filename: file.name,
+      storage_path: path,
+      bytes: file.size,
+      content_type: file.type,
+    })
+    .select('id, kind, filename, storage_path, bytes, created_at')
+    .single();
+
+  if (error) {
+    // Do not leave an orphaned object behind if the row could not be written.
+    await supabase.storage.from('uploads').remove([path]);
+    throw fromPostgrest(error, 'Could not save that reference.');
+  }
+
+  return data as ReferenceUpload;
+}
+
+export async function deleteReference(reference: ReferenceUpload): Promise<void> {
+  await supabase.storage.from('uploads').remove([reference.storage_path]);
+  const { error } = await supabase.from('reference_uploads').delete().eq('id', reference.id);
+  if (error) throw fromPostgrest(error, 'Could not remove that reference.');
+}
+
+// ---------------------------------------------------------------------------
 // Generation
 // ---------------------------------------------------------------------------
 
@@ -426,6 +491,17 @@ export interface GenerationOptions {
   thumbnailStyle?: string;
   instrumental?: boolean;
   seconds?: number;
+  /** Overrides the title derived from the prompt. */
+  title?: string;
+  model?: string;
+  vocalGender?: 'any' | 'male' | 'female';
+  /** 0-100. Higher wanders further from the brief. */
+  weirdness?: number;
+  /** 0-100. How strongly the style text steers the result. */
+  styleInfluence?: number;
+  referenceIds?: string[];
+  /** Files the new song into a project as it is created. */
+  projectId?: string;
   /** Omit for a fresh take; the server generates one when absent. */
   seed?: string;
   idempotencyKey?: string;

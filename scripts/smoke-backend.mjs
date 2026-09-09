@@ -284,7 +284,32 @@ async function main() {
   check('an empty brief is refused with 400', shortBrief.status === 400, `got ${shortBrief.status}`);
 
   // -------------------------------------------------------------------------
-  console.log('\n9. the worker is not callable from the browser');
+  console.log('\n9. model choice is a plan entitlement');
+  const freeUser = await createUser('freeplan');
+
+  const overreach = await api('/functions/v1/generate', {
+    token: freeUser.token,
+    method: 'POST',
+    body: { prompt: 'a song on a model I have not paid for', seconds: 15, model: 'v5' },
+  });
+  // The pricing page sells v5 as a paid feature, so asking for it on Free must
+  // be refused by the server, not merely hidden in the UI.
+  check('a free plan cannot select v5', !overreach.ok, `got ${overreach.status}`);
+  check('the refusal names the reason',
+    /model_not_available|not included in your plan/.test(overreach.text),
+    overreach.text.slice(0, 160));
+  check('no credits were taken for the refusal', (await credits(freeUser)) === 50,
+    `got ${await credits(freeUser)}`);
+
+  const allowed = await api('/functions/v1/generate', {
+    token: freeUser.token,
+    method: 'POST',
+    body: { prompt: 'a song on the model I do have', seconds: 15, model: 'v4.5' },
+  });
+  check('the plan\'s own model is accepted', allowed.ok, `${allowed.status} ${allowed.text.slice(0, 160)}`);
+
+  // -------------------------------------------------------------------------
+  console.log('\n10. the worker is not callable from the browser');
   const worker = await api('/functions/v1/worker', {
     token: alice.token, method: 'POST', body: {},
   });

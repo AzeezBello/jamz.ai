@@ -15,6 +15,11 @@ export interface GenerationRequest {
   instrumental: boolean;
   /** Distinguishes one take from another for the same prompt. */
   seed: string;
+  /** 0-100. Higher loosens the arrangement away from the brief. */
+  weirdness: number;
+  /** 0-100. How strongly the style text steers the result. */
+  styleInfluence: number;
+  vocalGender: string;
 }
 
 export interface GenerationOutput {
@@ -57,10 +62,22 @@ const mockProvider: GenerationProvider = {
     }
 
     const result = synthesize({
-      prompt: `${req.prompt} ${req.style} ${req.lyrics}`.trim(),
+      // styleInfluence decides how much the style text colours the brief that
+      // seeds the composition, so the slider has a real effect rather than
+      // being recorded and ignored.
+      prompt: [
+        req.prompt,
+        req.styleInfluence >= 40 ? req.style : '',
+        req.styleInfluence >= 75 ? req.style : '',
+        req.lyrics,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .trim(),
       seconds: req.seconds,
       instrumental: req.instrumental,
       seed: req.seed,
+      weirdness: req.weirdness,
     });
 
     return {

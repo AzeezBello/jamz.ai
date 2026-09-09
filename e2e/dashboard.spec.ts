@@ -29,14 +29,44 @@ test.describe('dashboard', () => {
     await page.goto('/dashboard');
 
     await page.getByLabel('Song concept').fill('a quiet lullaby for a long night');
-    await page.getByLabel('Lyrics').fill('hush now\nthe city is sleeping');
-    await page.getByRole('button', { name: 'Create song' }).click();
+    await page.getByLabel('Lyrics', { exact: true }).fill('hush now\nthe city is sleeping');
+    await page.getByRole('button', { name: 'Create', exact: true }).click();
 
     await expect(page.getByRole('dialog')).toContainText('is ready', { timeout: 90_000 });
     await page.getByRole('button', { name: 'Open song page' }).click();
 
     await expect(page.getByRole('heading', { name: 'Lyrics' })).toBeVisible();
     await expect(page.getByText('the city is sleeping')).toBeVisible();
+  });
+
+  test('the composer carries a title, styles and settings through', async ({ page }) => {
+    await signUp(page);
+    await page.goto('/dashboard');
+
+    await page.getByLabel('Song concept').fill('a patient song about waiting for a train');
+    await page.getByLabel('Song title (optional)').fill('The 6:04');
+
+    // Styles are chips over a comma-separated string.
+    const styleInput = page.getByLabel('Add a style');
+    await styleInput.fill('brushed drums');
+    await styleInput.press('Enter');
+    await expect(page.getByRole('button', { name: 'Remove style brushed drums' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Create', exact: true }).click();
+    await expect(page.getByRole('dialog')).toContainText('is ready', { timeout: 90_000 });
+
+    // The chosen title must win over one derived from the prompt.
+    await expect(page.getByRole('dialog')).toContainText('The 6:04');
+  });
+
+  test('v5 is locked on the free plan', async ({ page }) => {
+    await signUp(page);
+    await page.goto('/dashboard');
+
+    await page.getByLabel('Model version').click();
+    const v5 = page.getByRole('option', { name: /v5/ });
+    await expect(v5).toHaveAttribute('aria-disabled', 'true');
+    await page.keyboard.press('Escape');
   });
 
   test('a song can be renamed', async ({ page }) => {
