@@ -89,7 +89,7 @@ export default function BillingPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-6 pt-28 pb-32 space-y-10">
+    <div className="max-w-3xl mx-auto px-6 pt-8 pb-32 space-y-10">
       <h1 className="text-3xl font-bold">Billing</h1>
 
       <section className="bg-white/5 border border-white/10 rounded-2xl p-6">

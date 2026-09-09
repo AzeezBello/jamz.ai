@@ -5,7 +5,8 @@ test.describe('authentication', () => {
   test('a new account can sign up and reach the dashboard', async ({ page }) => {
     await signUp(page);
     await page.goto('/dashboard');
-    await expect(page.getByRole('heading', { name: 'My Dashboard' })).toBeVisible();
+    // The topbar names the current view; the dashboard opens on the library.
+    await expect(page.getByRole('heading', { name: 'My Library' })).toBeVisible();
   });
 
   test('each entry point opens the form it advertises', async ({ page }) => {

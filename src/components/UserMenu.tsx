@@ -14,7 +14,8 @@ import { CreditCard, Library, LogOut, Settings, Sparkles } from 'lucide-react';
 import AuthModal from './modals/AuthModal';
 import { useAuthStore } from '@/store/authStore';
 
-export default function UserMenu() {
+/** `compact` hides the name, for the collapsed sidebar rail. */
+export default function UserMenu({ compact = false }: { compact?: boolean } = {}) {
   const navigate = useNavigate();
   const { session, profile, user, signOut } = useAuthStore();
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -77,7 +78,7 @@ export default function UserMenu() {
           >
             <span className="text-black font-semibold text-sm">{name.charAt(0).toUpperCase()}</span>
           </span>
-          <span className="hidden sm:inline text-sm">{name}</span>
+          {!compact && <span className="hidden sm:inline text-sm">{name}</span>}
         </Button>
       </DropdownMenuTrigger>
 

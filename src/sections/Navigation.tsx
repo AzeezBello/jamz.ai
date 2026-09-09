@@ -2,7 +2,17 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import UserMenu from '@/components/UserMenu';
 import NotificationBell from '@/components/NotificationBell';
-import { LayoutDashboard, Library, CreditCard, Settings, Sparkles } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Library,
+  CreditCard,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Settings,
+  Sparkles,
+} from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useUiStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';
 
 const LINKS = [
@@ -15,6 +25,8 @@ export default function Navigation() {
   const [scrolled, setScrolled] = useState(false);
   const { pathname, search } = useLocation();
   const session = useAuthStore((state) => state.session);
+  const collapsed = useUiStore((state) => state.sidebarCollapsed);
+  const toggleSidebar = useUiStore((state) => state.toggleSidebar);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -48,31 +60,81 @@ export default function Navigation() {
 
     return (
       <>
-        <aside className="hidden md:flex fixed inset-y-0 left-0 z-50 w-64 flex-col border-r border-white/10 bg-[#080808] px-5 py-6">
-          <Link to="/" className="text-2xl font-bold tracking-tight text-white mb-10">
-            JAMZ
-          </Link>
-          <nav aria-label="Studio" className="space-y-1">
-            {links.map(({ label, to, icon: Icon, active }) => (
-              <Link
-                key={label}
-                to={to}
-                aria-current={active ? 'page' : undefined}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                  active
-                    ? 'bg-[#ff6b6b] text-black'
-                    : 'text-white/60 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                <Icon className="w-4 h-4" aria-hidden="true" />
-                {label}
+        <aside
+          className={`hidden md:flex fixed inset-y-0 left-0 z-50 flex-col border-r border-white/10 bg-[#080808] py-6 transition-[width] duration-200 ${
+            collapsed ? 'w-[72px] px-3' : 'w-64 px-5'
+          }`}
+        >
+          <div
+            className={`flex items-center mb-10 ${collapsed ? 'justify-center' : 'justify-between'}`}
+          >
+            {!collapsed && (
+              <Link to="/" className="text-2xl font-bold tracking-tight text-white">
+                JAMZ
               </Link>
-            ))}
+            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={toggleSidebar}
+                  aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                  aria-expanded={!collapsed}
+                  className="rounded-lg p-2 text-white/40 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#ff6b6b]"
+                >
+                  {collapsed ? (
+                    <PanelLeftOpen className="w-5 h-5" aria-hidden="true" />
+                  ) : (
+                    <PanelLeftClose className="w-5 h-5" aria-hidden="true" />
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="bg-[#1a1a1a] border-white/10 text-white">
+                {collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              </TooltipContent>
+            </Tooltip>
+          </div>
+
+          <nav aria-label="Studio" className="space-y-1">
+            {links.map(({ label, to, icon: Icon, active }) => {
+              const item = (
+                <Link
+                  to={to}
+                  aria-current={active ? 'page' : undefined}
+                  // The label is the accessible name when it is visible; when
+                  // collapsed the aria-label carries it instead, so the link is
+                  // never announced as bare icon.
+                  aria-label={collapsed ? label : undefined}
+                  className={`flex items-center gap-3 rounded-lg py-2.5 text-sm font-medium transition-colors ${
+                    collapsed ? 'justify-center px-0' : 'px-3'
+                  } ${
+                    active
+                      ? 'bg-[#ff6b6b] text-black'
+                      : 'text-white/60 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  {!collapsed && label}
+                </Link>
+              );
+
+              return collapsed ? (
+                <Tooltip key={label}>
+                  <TooltipTrigger asChild>{item}</TooltipTrigger>
+                  <TooltipContent side="right" className="bg-[#1a1a1a] border-white/10 text-white">
+                    {label}
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <div key={label}>{item}</div>
+              );
+            })}
           </nav>
+
           <div className="mt-auto">
-            <div className="flex items-center gap-1">
+            <div className={`flex items-center gap-1 ${collapsed ? 'flex-col' : ''}`}>
               <NotificationBell />
-              <UserMenu />
+              <UserMenu compact={collapsed} />
             </div>
           </div>
         </aside>

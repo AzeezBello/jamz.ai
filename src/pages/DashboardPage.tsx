@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Compass, Globe, Heart, Loader2, Music, Play, Sparkles, Wand2 } from 'lucide-react';
+import { Compass, Globe, Heart, Loader2, Music, Play, Wand2 } from 'lucide-react';
 import EmptyState from '@/components/onboarding/EmptyState';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import CreateStudio from '@/components/studio/CreateStudio';
@@ -25,14 +25,12 @@ import SongTable from '@/components/dashboard/SongTable';
 import SongCard from '@/components/SongCard';
 import WorkspacePanel from '@/components/dashboard/WorkspacePanel';
 import EditSongDialog from '@/components/dashboard/EditSongDialog';
-import { useAuthStore } from '@/store/authStore';
 import { useLibraryStore } from '@/store/libraryStore';
 import { formatCount } from '@/lib/format';
 import { GENERATION_COST } from '@/lib/credits';
 import type { Song } from '@/lib/types';
 
 export default function DashboardPage() {
-  const profile = useAuthStore((state) => state.profile);
   const {
     mySongs,
     publicSongs,
@@ -103,28 +101,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="max-w-[1400px] mx-auto px-6 pt-28 pb-32">
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-        <h1 className="text-3xl font-bold">My Dashboard</h1>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            onClick={openTour}
-            className="text-white/50 hover:text-white text-sm"
-          >
-            <Compass className="w-4 h-4 mr-2" aria-hidden="true" />
-            Take the tour
-          </Button>
-          <Link
-            to="/billing"
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
-          >
-            <Sparkles className="w-4 h-4 text-[#ff6b6b]" aria-hidden="true" />
-            <span className="text-sm">{profile?.credit_balance ?? 0} credits</span>
-          </Link>
-        </div>
-      </div>
-
+    <div className="max-w-[1400px] mx-auto px-6 pt-8 pb-32">
       {/* Composer and projects side by side, as in the reference: the brief on
           the left, where it gets filed on the right. */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)] mb-8">

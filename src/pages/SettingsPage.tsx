@@ -90,7 +90,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-6 pt-28 pb-32 space-y-10">
+    <div className="max-w-2xl mx-auto px-6 pt-8 pb-32 space-y-10">
       <h1 className="text-3xl font-bold">Settings</h1>
 
       <form onSubmit={handleProfileSubmit} className="space-y-5">

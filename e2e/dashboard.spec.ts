@@ -69,6 +69,41 @@ test.describe('dashboard', () => {
     await page.keyboard.press('Escape');
   });
 
+  test('the sidebar collapses and the choice sticks', async ({ page }) => {
+    await signUp(page);
+    await page.goto('/dashboard');
+
+    const studio = page.getByRole('navigation', { name: 'Studio' });
+    await expect(studio.getByRole('link', { name: 'Library' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Collapse sidebar' }).click();
+    // Collapsed keeps the links reachable, just without visible text.
+    await expect(page.getByRole('button', { name: 'Expand sidebar' })).toBeVisible();
+    await expect(studio.getByRole('link', { name: 'Library' })).toBeVisible();
+
+    // It is a device preference, so it should survive a reload.
+    await page.reload();
+    await expect(page.getByRole('button', { name: 'Expand sidebar' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Expand sidebar' }).click();
+    await expect(page.getByRole('button', { name: 'Collapse sidebar' })).toBeVisible();
+  });
+
+  test('app routes share a topbar; public pages do not', async ({ page }) => {
+    await signUp(page);
+
+    await page.goto('/settings');
+    await expect(page.getByRole('heading', { name: 'Settings' }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: /credits, view billing/ })).toBeVisible();
+
+    await page.goto('/billing');
+    await expect(page.getByRole('heading', { name: 'Billing' }).first()).toBeVisible();
+
+    // The marketing pages keep their own header.
+    await page.goto('/pricing');
+    await expect(page.getByRole('link', { name: /credits, view billing/ })).toHaveCount(0);
+  });
+
   test('only one sidebar item is highlighted at a time', async ({ page }) => {
     // Library and Discover share /dashboard and differ only by query string.
     // NavLink matches on pathname alone, so both used to light up together.
