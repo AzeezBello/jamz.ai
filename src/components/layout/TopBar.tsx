@@ -8,6 +8,7 @@ function usePageTitle(): string {
   const { pathname } = useLocation();
   const [params] = useSearchParams();
 
+  if (pathname === '/moderation') return 'Moderation';
   if (pathname === '/settings') return 'Settings';
   if (pathname === '/billing') return 'Billing';
   if (pathname === '/dashboard') {

@@ -143,6 +143,21 @@ export interface Invoice {
   created_at: string;
 }
 
+export type ReportStatus = 'open' | 'reviewing' | 'actioned' | 'dismissed';
+
+export interface ModerationReport {
+  id: string;
+  song_id: string;
+  song_title: string;
+  song_visible: SongVisibility;
+  owner_name: string;
+  reason: string;
+  details: string;
+  status: ReportStatus;
+  report_count: number;
+  created_at: string;
+}
+
 export interface Notification {
   id: string;
   kind: string;

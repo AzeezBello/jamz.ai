@@ -13,6 +13,7 @@ import ErrorBoundary from '@/components/layout/ErrorBoundary';
 const Landing = lazy(() => import('@/pages/Landing'));
 const PricingPage = lazy(() => import('@/pages/PricingPage'));
 const LegalPage = lazy(() => import('@/pages/LegalPage'));
+const ModerationPage = lazy(() => import('@/pages/ModerationPage'));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const SongPage = lazy(() => import('@/pages/SongPage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
@@ -62,6 +63,7 @@ function App() {
                 <Route path="/library" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/billing" element={<BillingPage />} />
+                <Route path="/moderation" element={<ModerationPage />} />
               </Route>
 
               <Route path="*" element={<NotFoundPage />} />

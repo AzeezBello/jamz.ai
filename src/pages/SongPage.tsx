@@ -1,8 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Loader2, Pause, Play, Heart, Share2, Download, Globe, Link2, Lock } from 'lucide-react';
+import {
+  Flag,
+  Loader2,
+  Pause,
+  Play,
+  Heart,
+  Share2,
+  Download,
+  Globe,
+  Link2,
+  Lock,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import NotFoundPage from './NotFoundPage';
+import ReportDialog from '@/components/modals/ReportDialog';
 import { fetchSong } from '@/lib/api';
 import { copyShareLink, downloadSong } from '@/lib/download';
 import { formatCount, formatDate, formatDuration } from '@/lib/format';
@@ -31,6 +43,7 @@ export default function SongPage() {
   // One piece of state tagged with the id it describes, so a route change
   // reads as "loading" by derivation instead of a setState inside an effect.
   const [result, setResult] = useState<{ id: string; song: Song | null } | null>(null);
+  const [reporting, setReporting] = useState(false);
 
   const session = useAuthStore((s) => s.session);
   const play = usePlayerStore((s) => s.play);
@@ -161,6 +174,18 @@ export default function SongPage() {
             >
               <Download className="w-4 h-4 mr-2" aria-hidden="true" /> Download
             </Button>
+
+            {/* Only songs other people can see are reportable, which is also
+                what the database enforces. */}
+            {session && song.user_id !== session.user.id && song.visibility !== 'private' && (
+              <Button
+                variant="ghost"
+                onClick={() => setReporting(true)}
+                className="text-white/40 hover:text-[#ff6b6b]"
+              >
+                <Flag className="w-4 h-4 mr-2" aria-hidden="true" /> Report
+              </Button>
+            )}
           </div>
 
           <dl className="grid grid-cols-3 gap-4 text-sm max-w-sm">
@@ -189,6 +214,7 @@ export default function SongPage() {
           </p>
         </section>
       )}
+      <ReportDialog song={reporting ? song : null} onClose={() => setReporting(false)} />
     </article>
   );
 }

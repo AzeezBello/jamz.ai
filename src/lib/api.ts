@@ -6,6 +6,7 @@ import {
   type CreditEntry,
   type GenerationJob,
   type Invoice,
+  type ModerationReport,
   type Notification,
   type Plan,
   type PlanId,
@@ -607,6 +608,54 @@ export async function openBillingPortal(): Promise<string> {
 
 export async function deleteAccount(confirmEmail: string): Promise<void> {
   await callFunction('delete-account', { confirm: confirmEmail });
+}
+
+// ---------------------------------------------------------------------------
+// Moderation
+// ---------------------------------------------------------------------------
+
+export const REPORT_REASONS = [
+  { value: 'copyright', label: 'Copyright infringement' },
+  { value: 'voice_likeness', label: "Imitates a real person's voice" },
+  { value: 'hateful', label: 'Hateful or harassing' },
+  { value: 'sexual', label: 'Sexual content involving minors' },
+  { value: 'other', label: 'Something else' },
+] as const;
+
+export async function reportSong(songId: string, reason: string, details = ''): Promise<void> {
+  const { error } = await supabase.rpc('report_song', {
+    p_song_id: songId,
+    p_reason: reason,
+    p_details: details,
+  });
+  if (error) throw fromPostgrest(error, 'Could not submit that report.');
+}
+
+export async function isModerator(): Promise<boolean> {
+  const { data } = await supabase.rpc('is_moderator');
+  return data === true;
+}
+
+export async function fetchModerationQueue(
+  status: 'open' | 'actioned' | 'dismissed' = 'open',
+): Promise<ModerationReport[]> {
+  const { data, error } = await supabase.rpc('moderation_queue', { p_status: status });
+  if (error) throw fromPostgrest(error, 'Could not load the moderation queue.');
+  return (data ?? []) as ModerationReport[];
+}
+
+/** `dismiss` closes it, `unlist` hides it from Discover, `remove` deletes it. */
+export async function resolveReport(
+  reportId: string,
+  action: 'dismiss' | 'unlist' | 'remove',
+  note = '',
+): Promise<void> {
+  const { error } = await supabase.rpc('resolve_report', {
+    p_report_id: reportId,
+    p_action: action,
+    p_note: note,
+  });
+  if (error) throw fromPostgrest(error, 'Could not resolve that report.');
 }
 
 // ---------------------------------------------------------------------------

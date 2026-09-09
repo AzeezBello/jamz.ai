@@ -204,6 +204,55 @@ end;
 $$;
 
 -- ===========================================================================
+-- Moderation, as Bob (not a moderator).
+-- ===========================================================================
+reset role;
+set local role authenticated;
+set local "request.jwt.claims" = '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}';
+
+do $$
+declare v_failed boolean; v_count int;
+begin
+  raise notice 'T. anyone can report a song they can see';
+  update songs set visibility = 'public' where id = '44444444-4444-4444-4444-444444444444';
+  perform report_song('44444444-4444-4444-4444-444444444444', 'copyright', 'sounds like my track');
+  select count(*) into v_count from reports
+    where song_id = '44444444-4444-4444-4444-444444444444';
+  if v_count <> 1 then raise exception 'FAIL: report was not recorded'; end if;
+
+  raise notice 'U. reporting twice updates rather than floods the queue';
+  perform report_song('44444444-4444-4444-4444-444444444444', 'copyright', 'second thoughts');
+  select count(*) into v_count from reports
+    where song_id = '44444444-4444-4444-4444-444444444444' and status = 'open';
+  if v_count <> 1 then raise exception 'FAIL: duplicate open reports (%)', v_count; end if;
+
+  raise notice 'V. a private song cannot be probed through the report form';
+  v_failed := false;
+  begin
+    perform report_song('33333333-3333-3333-3333-333333333333', 'copyright', '');
+  exception when no_data_found then
+    v_failed := true;
+  end;
+  if not v_failed then raise exception 'FAIL: a private song was reportable'; end if;
+
+  raise notice 'W. a non-moderator sees an empty queue and cannot act';
+  select count(*) into v_count from moderation_queue('open');
+  if v_count <> 0 then raise exception 'FAIL: queue leaked % rows to a normal user', v_count; end if;
+
+  v_failed := false;
+  begin
+    perform resolve_report(
+      (select id from reports limit 1), 'remove', 'should not work');
+  exception when insufficient_privilege then
+    v_failed := true;
+  end;
+  if not v_failed then raise exception 'FAIL: a normal user resolved a report'; end if;
+
+  raise notice 'MODERATION IS CLOSED TO NON-MODERATORS';
+end;
+$$;
+
+-- ===========================================================================
 -- As an anonymous visitor.
 -- ===========================================================================
 reset role;
