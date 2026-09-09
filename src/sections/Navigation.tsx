@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import UserMenu from '@/components/UserMenu';
 import NotificationBell from '@/components/NotificationBell';
 import { LayoutDashboard, Library, CreditCard, Settings, Sparkles } from 'lucide-react';
@@ -13,7 +13,7 @@ const LINKS = [
 
 export default function Navigation() {
   const [scrolled, setScrolled] = useState(false);
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const session = useAuthStore((state) => state.session);
 
   useEffect(() => {
@@ -24,12 +24,26 @@ export default function Navigation() {
   }, []);
 
   if (session) {
+    // Library and Discover share a path and differ only by query string.
+    // NavLink matches on pathname alone, so both lit up at once — active state
+    // is worked out here instead.
+    const discovering = pathname === '/dashboard' && search.includes('tab=discover');
     const links = [
-      { label: 'Create', to: '/', icon: Sparkles },
-      { label: 'Library', to: '/dashboard', icon: Library },
-      { label: 'Discover', to: '/dashboard?tab=discover', icon: LayoutDashboard },
-      { label: 'Billing', to: '/billing', icon: CreditCard },
-      { label: 'Settings', to: '/settings', icon: Settings },
+      { label: 'Create', to: '/', icon: Sparkles, active: pathname === '/' },
+      {
+        label: 'Library',
+        to: '/dashboard',
+        icon: Library,
+        active: pathname === '/dashboard' && !discovering,
+      },
+      {
+        label: 'Discover',
+        to: '/dashboard?tab=discover',
+        icon: LayoutDashboard,
+        active: discovering,
+      },
+      { label: 'Billing', to: '/billing', icon: CreditCard, active: pathname === '/billing' },
+      { label: 'Settings', to: '/settings', icon: Settings, active: pathname === '/settings' },
     ];
 
     return (
@@ -39,18 +53,20 @@ export default function Navigation() {
             JAMZ
           </Link>
           <nav aria-label="Studio" className="space-y-1">
-            {links.map(({ label, to, icon: Icon }) => (
-              <NavLink
+            {links.map(({ label, to, icon: Icon, active }) => (
+              <Link
                 key={label}
                 to={to}
-                end={label === 'Create' || label === 'Library'}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isActive ? 'bg-[#ff6b6b] text-black' : 'text-white/60 hover:bg-white/10 hover:text-white'}`
-                }
+                aria-current={active ? 'page' : undefined}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                  active
+                    ? 'bg-[#ff6b6b] text-black'
+                    : 'text-white/60 hover:bg-white/10 hover:text-white'
+                }`}
               >
                 <Icon className="w-4 h-4" aria-hidden="true" />
                 {label}
-              </NavLink>
+              </Link>
             ))}
           </nav>
           <div className="mt-auto">

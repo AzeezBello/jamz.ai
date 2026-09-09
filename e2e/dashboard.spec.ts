@@ -69,6 +69,33 @@ test.describe('dashboard', () => {
     await page.keyboard.press('Escape');
   });
 
+  test('only one sidebar item is highlighted at a time', async ({ page }) => {
+    // Library and Discover share /dashboard and differ only by query string.
+    // NavLink matches on pathname alone, so both used to light up together.
+    await signUp(page);
+    const studio = page.getByRole('navigation', { name: 'Studio' });
+
+    await page.goto('/dashboard');
+    await expect(studio.getByRole('link', { name: 'Library' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    await expect(studio.getByRole('link', { name: 'Discover' })).not.toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+
+    await page.goto('/dashboard?tab=discover');
+    await expect(studio.getByRole('link', { name: 'Discover' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    await expect(studio.getByRole('link', { name: 'Library' })).not.toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+  });
+
   test('a song can be renamed', async ({ page }) => {
     await withOneSong(page, 'a restless techno loop for midnight');
 
