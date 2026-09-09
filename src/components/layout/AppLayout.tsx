@@ -23,7 +23,7 @@ export default function AppLayout() {
   const resume = useGenerationStore((s) => s.resume);
   const hasPlayer = usePlayerStore((s) => Boolean(s.currentSong));
   const collapsed = useUiStore((state) => state.sidebarCollapsed);
-  const showTopBar = Boolean(session) && isAppRoute(pathname);
+  const showAppChrome = Boolean(session) && isAppRoute(pathname);
 
   // A generation started before a refresh is still running on the server;
   // pick the progress back up instead of losing it.
@@ -49,12 +49,12 @@ export default function AppLayout() {
         <main
           id="main"
           className={`${
-            session ? (collapsed ? 'md:pl-[72px]' : 'md:pl-64') : ''
-          } ${session ? 'pt-14 md:pt-0' : ''} transition-[padding] duration-200 ${
+            showAppChrome ? (collapsed ? 'md:pl-[72px]' : 'md:pl-64') : ''
+          } ${showAppChrome ? 'pt-14 md:pt-0' : ''} transition-[padding] duration-200 ${
             hasPlayer ? 'pb-24' : ''
           }`}
         >
-          {showTopBar && <TopBar />}
+          {showAppChrome && <TopBar />}
           <Outlet />
         </main>
         <Footer />

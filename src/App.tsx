@@ -53,7 +53,9 @@ function App() {
             <Route element={<AppLayout />}>
               <Route path="/" element={<Landing />} />
               <Route path="/pricing" element={<PricingPage />} />
-              <Route path="/legal/:slug" element={<LegalPage />} />
+              <Route path="/legal/terms" element={<LegalPage />} />
+              <Route path="/legal/privacy" element={<LegalPage />} />
+              <Route path="/legal/ai-disclosure" element={<LegalPage />} />
               <Route path="/song/:id" element={<SongPage />} />
               <Route path="/auth/callback" element={<AuthCallbackPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />

@@ -16,6 +16,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Menu } from 'lucide-react';
 import { useUiStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';
+import { isAppRoute } from '@/lib/app-routes';
 
 const LINKS = [
   { label: 'Create', to: '/' },
@@ -38,7 +39,7 @@ export default function Navigation() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  if (session) {
+  if (session && isAppRoute(pathname)) {
     // Library and Discover share a path and differ only by query string.
     // NavLink matches on pathname alone, so both lit up at once — active state
     // is worked out here instead.

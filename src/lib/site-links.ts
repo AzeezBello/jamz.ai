@@ -26,6 +26,7 @@ function group(entries: Array<[string, string | null, boolean?]>): SiteLink[] {
 
 export const footerGroups: Record<string, SiteLink[]> = {
   Brand: group([
+    ['Create', '/', true],
     ['About', external(import.meta.env.VITE_ABOUT_URL)],
     ['Work at Jamz', external(import.meta.env.VITE_CAREERS_URL)],
     ['Blog', external(import.meta.env.VITE_BLOG_URL)],

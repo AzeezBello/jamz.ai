@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -28,6 +28,7 @@ const MIN_PASSWORD_LENGTH = 8;
 
 export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: AuthModalProps) {
   const { signIn, signUp, requestPasswordReset } = useAuthStore();
+  const navigate = useNavigate();
 
   const [view, setView] = useState<View>(defaultTab);
   const [email, setEmail] = useState('');
@@ -64,6 +65,7 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
       await signIn(email, password, rememberMe);
       toast.success('Welcome back.');
       handleClose();
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       // Deliberately generic: distinguishing "no such account" from "wrong
       // password" tells an attacker which emails are registered.
