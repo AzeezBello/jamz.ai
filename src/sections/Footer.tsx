@@ -120,15 +120,14 @@ export default function Footer() {
           <p className="text-white/40 text-sm">© {new Date().getFullYear()} Jamz, Inc.</p>
           <div className="flex items-center gap-6">
             {legalLinks.map((link) => (
-              <a
+              // These are in-app routes now, so they must not open in a new tab.
+              <Link
                 key={link.label}
-                href={link.href}
-                target="_blank"
-                rel="noreferrer"
+                to={link.href}
                 className="text-white/40 text-sm hover:text-white transition-colors"
               >
                 {link.label}
-              </a>
+              </Link>
             ))}
           </div>
         </div>

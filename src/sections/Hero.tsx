@@ -208,7 +208,7 @@ export default function Hero() {
           className="w-full max-w-2xl mb-16"
           style={{ animation: 'scale-in 0.7s var(--ease-elastic) 1.1s forwards', opacity: 0 }}
         >
-          <div className="glass rounded-2xl p-2 flex items-center gap-2">
+          <div className="glass rounded-2xl p-2 flex flex-wrap items-center gap-2">
             <label htmlFor="prompt" className="sr-only">
               Describe the song you want
             </label>
@@ -218,7 +218,7 @@ export default function Hero() {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="Make a country song about Jess being late"
-              className="flex-1 bg-transparent text-white placeholder-white/40 px-4 py-3 outline-none text-sm md:text-base"
+              className="min-w-0 flex-1 basis-full sm:basis-auto bg-transparent text-white placeholder-white/40 px-4 py-3 outline-none text-sm md:text-base"
               onKeyDown={(e) => e.key === 'Enter' && void handleCreate()}
             />
 
@@ -251,7 +251,7 @@ export default function Hero() {
             <Button
               onClick={() => void handleCreate()}
               disabled={submitting || initializing}
-              className="gradient-coral text-black font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition-all hover:scale-105 flex items-center gap-2"
+              className="ml-auto gradient-coral text-black font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition-all hover:scale-105 flex items-center gap-2"
             >
               {submitting ? (
                 <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />

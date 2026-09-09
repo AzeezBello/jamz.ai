@@ -1,5 +1,6 @@
 import { toast } from 'sonner';
 import { getAudioUrl } from './api';
+import { track } from './observability';
 
 /**
  * Downloads a master. The signed URL carries a Content-Disposition of
@@ -16,6 +17,7 @@ export async function downloadSong(songId: string, title: string): Promise<void>
     link.click();
     link.remove();
     toast.success('Download started', { id: toastId });
+    track('song_downloaded');
   } catch (err) {
     toast.error(err instanceof Error ? err.message : 'Download failed.', { id: toastId });
   }

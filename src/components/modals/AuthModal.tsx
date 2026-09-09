@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -329,8 +330,16 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Aut
                   )}
 
                   <p className="text-white/30 text-xs">
-                    At least {MIN_PASSWORD_LENGTH} characters. By signing up you agree to our terms
-                    and AI content policy.
+                    At least {MIN_PASSWORD_LENGTH} characters. By signing up you agree to our{' '}
+                    {/* Consent has to be reachable at the point it is given. */}
+                    <Link to="/legal/terms" className="underline hover:text-white">
+                      terms
+                    </Link>{' '}
+                    and{' '}
+                    <Link to="/legal/ai-disclosure" className="underline hover:text-white">
+                      AI disclosure
+                    </Link>
+                    .
                   </p>
 
                   {error && (

@@ -12,6 +12,8 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Menu } from 'lucide-react';
 import { useUiStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';
 
@@ -27,6 +29,7 @@ export default function Navigation() {
   const session = useAuthStore((state) => state.session);
   const collapsed = useUiStore((state) => state.sidebarCollapsed);
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -138,13 +141,53 @@ export default function Navigation() {
             </div>
           </div>
         </aside>
+        {/* Below md the sidebar is hidden, and until now that left no way to
+            reach Library, Billing or Settings on a phone at all. */}
         <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between border-b border-white/10 bg-[#080808]/95 px-4 py-3 backdrop-blur">
-          <Link to="/" className="text-xl font-bold">
-            JAMZ
-          </Link>
+          <div className="flex items-center gap-1">
+            <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+              <SheetTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Open navigation"
+                  className="rounded-lg p-2 text-white/70 hover:bg-white/10 hover:text-white"
+                >
+                  <Menu className="w-5 h-5" aria-hidden="true" />
+                </button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-64 border-white/10 bg-[#080808] text-white">
+                <SheetHeader>
+                  <SheetTitle className="text-white">JAMZ</SheetTitle>
+                </SheetHeader>
+                <nav aria-label="Studio mobile" className="space-y-1 px-4">
+                  {links.map(({ label, to, icon: Icon, active }) => (
+                    <Link
+                      key={label}
+                      to={to}
+                      onClick={() => setMobileNavOpen(false)}
+                      aria-current={active ? 'page' : undefined}
+                      className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                        active
+                          ? 'bg-[#ff6b6b] text-black'
+                          : 'text-white/60 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" aria-hidden="true" />
+                      {label}
+                    </Link>
+                  ))}
+                </nav>
+              </SheetContent>
+            </Sheet>
+
+            <Link to="/" className="text-xl font-bold">
+              JAMZ
+            </Link>
+          </div>
+
           <div className="flex items-center gap-1">
             <NotificationBell />
-            <UserMenu />
+            <UserMenu compact />
           </div>
         </div>
       </>

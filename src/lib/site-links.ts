@@ -38,16 +38,16 @@ export const footerGroups: Record<string, SiteLink[]> = {
     ['Community Guidelines', external(import.meta.env.VITE_GUIDELINES_URL)],
   ]),
   Legal: group([
-    ['Terms of Service', external(import.meta.env.VITE_TERMS_URL)],
-    ['Privacy Policy', external(import.meta.env.VITE_PRIVACY_URL)],
-    ['AI Disclosure', external(import.meta.env.VITE_AI_DISCLOSURE_URL)],
+    ['Terms of Service', '/legal/terms', true],
+    ['Privacy Policy', '/legal/privacy', true],
+    ['AI Disclosure', '/legal/ai-disclosure', true],
   ]),
 };
 
 export const legalLinks: SiteLink[] = group([
-  ['Terms', external(import.meta.env.VITE_TERMS_URL)],
-  ['Privacy', external(import.meta.env.VITE_PRIVACY_URL)],
-  ['Cookies', external(import.meta.env.VITE_COOKIES_URL)],
+  ['Terms', '/legal/terms', true],
+  ['Privacy', '/legal/privacy', true],
+  ['AI Disclosure', '/legal/ai-disclosure', true],
 ]);
 
 export const appStoreLinks = {

@@ -23,6 +23,19 @@ export default defineConfig({
         manualChunks: {
           react: ['react', 'react-dom', 'react-router-dom'],
           supabase: ['@supabase/supabase-js'],
+          // Radix primitives are shared across nearly every screen, so they
+          // cache separately instead of being invalidated by app changes.
+          radix: [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-select',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-slider',
+            '@radix-ui/react-switch',
+            '@radix-ui/react-tooltip',
+            '@radix-ui/react-checkbox',
+            '@radix-ui/react-alert-dialog',
+          ],
         },
       },
     },

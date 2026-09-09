@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { useAuthStore } from './authStore';
+import { track } from '@/lib/observability';
 
 export type GuideSurface = 'onboarding' | 'tour';
 
@@ -33,7 +34,10 @@ export const useOnboardingStore = create<OnboardingState>()((set, get) => ({
     else if (get().active === 'onboarding') set({ active: null });
   },
 
-  openTour: () => set({ active: 'tour', tourStep: 0 }),
+  openTour: () => {
+    track('tour_started');
+    set({ active: 'tour', tourStep: 0 });
+  },
   setTourStep: (step) => set({ tourStep: step }),
 
   finishOnboarding: async ({ startTour = false } = {}) => {

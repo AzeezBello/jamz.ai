@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
+import { reportError } from '@/lib/observability';
 
 interface Props {
   children: ReactNode;
@@ -21,6 +22,7 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('Unhandled render error', error, info);
+    reportError(error, { componentStack: info.componentStack });
   }
 
   render() {

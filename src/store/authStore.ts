@@ -4,6 +4,7 @@ import { setRememberSession, supabase } from '@/lib/supabase';
 import { env } from '@/lib/env';
 import { fetchProfile, updateProfile } from '@/lib/api';
 import { ApiError, type Profile } from '@/lib/types';
+import { forgetUser, identify } from '@/lib/observability';
 
 interface AuthState {
   session: Session | null;
@@ -56,6 +57,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
       if (event === 'SIGNED_OUT' || !session) {
         set({ profile: null });
+        forgetUser();
         resetHandlers.forEach((reset) => reset());
       } else {
         void get().refreshProfile();
@@ -118,7 +120,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     const user = get().user ?? (await supabase.auth.getUser()).data.user;
     if (!user) return;
     try {
-      set({ profile: await fetchProfile(user.id) });
+      const profile = await fetchProfile(user.id);
+      set({ profile });
+      // Id and plan only — never the email or display name.
+      identify(profile.id, profile.plan_id);
     } catch (err) {
       set({ error: err instanceof Error ? err.message : 'Could not load your profile.' });
     }

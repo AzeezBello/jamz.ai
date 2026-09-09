@@ -23,6 +23,8 @@ function nav(page: Page) {
  * is visible at the current viewport.
  */
 function accountButton(page: Page) {
+  // Matches the account trigger at any width: the name is hidden on small
+  // screens and in the collapsed rail, but the aria-label always carries it.
   return page.getByRole('button', { name: /E2E Tester/ }).first();
 }
 

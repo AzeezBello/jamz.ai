@@ -30,6 +30,7 @@ export const env = {
   siteUrl: read('VITE_SITE_URL') || window.location.origin,
   sentryDsn: read('VITE_SENTRY_DSN'),
   posthogKey: read('VITE_POSTHOG_KEY'),
+  posthogHost: read('VITE_POSTHOG_HOST') || 'https://us.i.posthog.com',
 };
 
 export const isConfigured = Boolean(env.supabaseUrl && env.supabaseAnonKey);

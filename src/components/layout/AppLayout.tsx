@@ -1,16 +1,19 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Navigation from '@/sections/Navigation';
 import Footer from '@/sections/Footer';
 import AudioPlayer from '@/components/audio/AudioPlayer';
 import GenerationModal from '@/components/modals/GenerationModal';
-import OnboardingDialog from '@/components/onboarding/OnboardingDialog';
-import ProductTour from '@/components/onboarding/ProductTour';
+// Guidance surfaces are occasional — the intro shows once and the tour is
+// opt-in — so they should not sit in the shell everyone downloads.
+const OnboardingDialog = lazy(() => import('@/components/onboarding/OnboardingDialog'));
+const ProductTour = lazy(() => import('@/components/onboarding/ProductTour'));
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useAuthStore } from '@/store/authStore';
 import { useGenerationStore } from '@/store/generationStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useUiStore } from '@/store/uiStore';
+import { trackPageView } from '@/lib/observability';
 import TopBar from './TopBar';
 import { isAppRoute } from '@/lib/app-routes';
 
@@ -30,6 +33,7 @@ export default function AppLayout() {
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
+    trackPageView(pathname);
   }, [pathname]);
 
   return (
@@ -46,7 +50,9 @@ export default function AppLayout() {
           id="main"
           className={`${
             session ? (collapsed ? 'md:pl-[72px]' : 'md:pl-64') : ''
-          } transition-[padding] duration-200 ${hasPlayer ? 'pb-24' : ''}`}
+          } ${session ? 'pt-14 md:pt-0' : ''} transition-[padding] duration-200 ${
+            hasPlayer ? 'pb-24' : ''
+          }`}
         >
           {showTopBar && <TopBar />}
           <Outlet />
@@ -54,8 +60,10 @@ export default function AppLayout() {
         <Footer />
         <AudioPlayer />
         <GenerationModal />
-        <OnboardingDialog />
-        <ProductTour />
+        <Suspense fallback={null}>
+          <OnboardingDialog />
+          <ProductTour />
+        </Suspense>
       </div>
     </TooltipProvider>
   );

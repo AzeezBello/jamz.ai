@@ -8,6 +8,7 @@ import AuthModal from '@/components/modals/AuthModal';
 import { fetchPlans, startCheckout } from '@/lib/api';
 import { formatMoney } from '@/lib/format';
 import { useAuthStore } from '@/store/authStore';
+import { track } from '@/lib/observability';
 import type { BillingInterval, Plan } from '@/lib/types';
 
 const BADGE: Record<string, string> = { pro: 'Most Popular', premier: 'Best Value' };
@@ -58,6 +59,7 @@ export default function Pricing() {
     }
 
     setPendingPlan(plan.id);
+    track('checkout_started', { plan: plan.id, interval });
     try {
       window.location.assign(await startCheckout(plan.id, interval));
     } catch (err) {

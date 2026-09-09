@@ -71,7 +71,13 @@ export default function UserMenu({ compact = false }: { compact?: boolean } = {}
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="flex items-center gap-2 text-white hover:bg-white/10">
+        <Button
+          variant="ghost"
+          // The name is hidden on small screens and in the collapsed rail, so
+          // without this the trigger is announced as a bare avatar letter.
+          aria-label={`Account menu for ${name}`}
+          className="flex items-center gap-2 text-white hover:bg-white/10"
+        >
           <span
             className="w-8 h-8 rounded-full gradient-coral flex items-center justify-center"
             aria-hidden="true"

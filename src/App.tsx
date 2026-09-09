@@ -4,11 +4,15 @@ import { Toaster } from '@/components/ui/sonner';
 import AppLayout from '@/components/layout/AppLayout';
 import RequireAuth from '@/components/auth/RequireAuth';
 import ErrorBoundary from '@/components/layout/ErrorBoundary';
-import Landing from '@/pages/Landing';
 
 // Everything past the landing page is loaded on demand; the marketing page is
 // the only route most visitors ever see.
+// The landing page pulls in every marketing section (canvas hero, showcase,
+// pricing, gallery) and was the bulk of the entry chunk, loaded even for
+// signed-in users who go straight to the dashboard.
+const Landing = lazy(() => import('@/pages/Landing'));
 const PricingPage = lazy(() => import('@/pages/PricingPage'));
+const LegalPage = lazy(() => import('@/pages/LegalPage'));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const SongPage = lazy(() => import('@/pages/SongPage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
@@ -48,6 +52,7 @@ function App() {
             <Route element={<AppLayout />}>
               <Route path="/" element={<Landing />} />
               <Route path="/pricing" element={<PricingPage />} />
+              <Route path="/legal/:slug" element={<LegalPage />} />
               <Route path="/song/:id" element={<SongPage />} />
               <Route path="/auth/callback" element={<AuthCallbackPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />

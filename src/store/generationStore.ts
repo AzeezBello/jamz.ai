@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { toast } from 'sonner';
+import { track } from '@/lib/observability';
 import * as api from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 import { onSignOut, useAuthStore } from './authStore';
@@ -44,6 +45,14 @@ export const useGenerationStore = create<GenerationState>()((set, get) => {
     teardown();
     set({ job });
     void useAuthStore.getState().refreshProfile();
+
+    track(
+      job.status === 'completed'
+        ? 'generation_completed'
+        : job.status === 'cancelled'
+          ? 'generation_cancelled'
+          : 'generation_failed',
+    );
 
     if (job.status === 'completed' && job.song_id) {
       const song = await api.fetchSong(job.song_id);
@@ -104,6 +113,7 @@ export const useGenerationStore = create<GenerationState>()((set, get) => {
           idempotencyKey: options.idempotencyKey ?? crypto.randomUUID(),
         });
         set({ job });
+        track('generation_started', { seconds: options.seconds ?? 45 });
         void useAuthStore.getState().refreshProfile();
         watch(job.id);
         return job;
