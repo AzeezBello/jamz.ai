@@ -93,6 +93,7 @@ async function runJob(db: any, job: any) {
         style: String(params.style ?? ''),
         seconds: Number(params.seconds ?? 45),
         instrumental: Boolean(params.instrumental),
+        seed: String(params.seed ?? job.id),
       },
       onProgress,
     );

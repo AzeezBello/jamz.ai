@@ -76,6 +76,12 @@ export interface SynthOptions {
   prompt: string;
   seconds: number;
   instrumental: boolean;
+  /**
+   * Mixed into the prompt hash. Same prompt plus same seed always gives the
+   * same track; changing the seed is what makes a "variation" a different
+   * take rather than a byte-identical copy.
+   */
+  seed?: string;
 }
 
 export interface SynthResult {
@@ -88,9 +94,8 @@ export interface SynthResult {
 
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
-export function synthesize({ prompt, seconds, instrumental }: SynthOptions): SynthResult {
-  const seed = hashString(prompt);
-  const rand = seededRandom(seed);
+export function synthesize({ prompt, seconds, instrumental, seed }: SynthOptions): SynthResult {
+  const rand = seededRandom(hashString(seed ? `${prompt}::${seed}` : prompt));
 
   const isMinor = /sad|melanchol|dark|goth|moody|lo-?fi|rain|lonely|heart/i.test(prompt)
     ? true

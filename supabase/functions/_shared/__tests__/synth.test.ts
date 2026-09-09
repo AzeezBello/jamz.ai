@@ -59,6 +59,39 @@ describe('synthesize', () => {
     expect(again.wav.length).toBe(result.wav.length);
   });
 
+  it('gives a different take for a different seed', () => {
+    // A variation must not be a byte-identical copy of the original.
+    const a = synthesize({
+      prompt: 'a steady indie track',
+      seconds: 8,
+      instrumental: false,
+      seed: 'one',
+    });
+    const b = synthesize({
+      prompt: 'a steady indie track',
+      seconds: 8,
+      instrumental: false,
+      seed: 'two',
+    });
+    expect(Buffer.from(a.wav).equals(Buffer.from(b.wav))).toBe(false);
+  });
+
+  it('is still reproducible for the same prompt and seed', () => {
+    const a = synthesize({
+      prompt: 'a steady indie track',
+      seconds: 8,
+      instrumental: false,
+      seed: 'one',
+    });
+    const b = synthesize({
+      prompt: 'a steady indie track',
+      seconds: 8,
+      instrumental: false,
+      seed: 'one',
+    });
+    expect(Buffer.from(a.wav).equals(Buffer.from(b.wav))).toBe(true);
+  });
+
   it('reads the mood out of the prompt', () => {
     expect(
       synthesize({ prompt: 'a sad lonely ballad', seconds: 8, instrumental: false }).key,

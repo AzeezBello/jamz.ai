@@ -144,6 +144,66 @@ end;
 $$;
 
 -- ===========================================================================
+-- As Alice, who owns the songs.
+-- ===========================================================================
+reset role;
+set local role authenticated;
+set local "request.jwt.claims" = '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
+
+do $$
+declare v_failed boolean;
+begin
+  raise notice 'P. an owner may rename their own song';
+  update songs set title = 'Renamed By Owner'
+   where id = '33333333-3333-3333-3333-333333333333';
+  if not found then raise exception 'FAIL: owner could not rename their song'; end if;
+
+  raise notice 'Q. an owner cannot grant themselves commercial rights';
+  -- commercial_use comes from the plan at generation time. Without a guard the
+  -- songs UPDATE policy let an owner simply set it to true.
+  v_failed := false;
+  begin
+    update songs set commercial_use = true
+     where id = '33333333-3333-3333-3333-333333333333';
+  exception when check_violation then
+    v_failed := true;
+  end;
+  if not v_failed then raise exception 'FAIL: self-granted commercial rights'; end if;
+
+  raise notice 'R. an owner cannot inflate their own counters';
+  v_failed := false;
+  begin
+    update songs set play_count = 999999
+     where id = '33333333-3333-3333-3333-333333333333';
+  exception when check_violation then
+    v_failed := true;
+  end;
+  if not v_failed then raise exception 'FAIL: play_count was writable'; end if;
+
+  v_failed := false;
+  begin
+    update songs set like_count = 999999
+     where id = '33333333-3333-3333-3333-333333333333';
+  exception when check_violation then
+    v_failed := true;
+  end;
+  if not v_failed then raise exception 'FAIL: like_count was writable'; end if;
+
+  raise notice 'S. a song cannot be handed to another user';
+  v_failed := false;
+  begin
+    update songs set user_id = '22222222-2222-2222-2222-222222222222'
+     where id = '33333333-3333-3333-3333-333333333333';
+  exception when check_violation then
+    v_failed := true;
+  end;
+  if not v_failed then raise exception 'FAIL: song ownership was transferable'; end if;
+
+  raise notice 'OWNER WRITES ARE CONFINED TO EDITABLE COLUMNS';
+end;
+$$;
+
+-- ===========================================================================
 -- As an anonymous visitor.
 -- ===========================================================================
 reset role;

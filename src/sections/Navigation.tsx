@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import UserMenu from '@/components/UserMenu';
+import NotificationBell from '@/components/NotificationBell';
 import { LayoutDashboard, Library, CreditCard, Settings, Sparkles } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 
@@ -53,14 +54,20 @@ export default function Navigation() {
             ))}
           </nav>
           <div className="mt-auto">
-            <UserMenu />
+            <div className="flex items-center gap-1">
+              <NotificationBell />
+              <UserMenu />
+            </div>
           </div>
         </aside>
         <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between border-b border-white/10 bg-[#080808]/95 px-4 py-3 backdrop-blur">
           <Link to="/" className="text-xl font-bold">
             JAMZ
           </Link>
-          <UserMenu />
+          <div className="flex items-center gap-1">
+            <NotificationBell />
+            <UserMenu />
+          </div>
         </div>
       </>
     );
@@ -96,7 +103,10 @@ export default function Navigation() {
           ))}
         </div>
 
-        <UserMenu />
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <UserMenu />
+        </div>
       </div>
     </nav>
   );

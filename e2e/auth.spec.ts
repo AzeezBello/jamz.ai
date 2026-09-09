@@ -30,7 +30,7 @@ test.describe('authentication', () => {
       'data-state',
       'active',
     );
-    await expect(dialog.getByLabel('Name')).toBeVisible();
+    await expect(dialog.getByLabel('Name', { exact: true })).toBeVisible();
   });
 
   test('a wrong password is rejected', async ({ page }) => {
@@ -42,8 +42,8 @@ test.describe('authentication', () => {
       .click();
 
     const dialog = page.getByRole('dialog');
-    await dialog.getByLabel('Email').fill(uniqueEmail());
-    await dialog.getByLabel('Password').fill('definitely-not-the-password');
+    await dialog.getByLabel('Email', { exact: true }).fill(uniqueEmail());
+    await dialog.getByLabel('Password', { exact: true }).fill('definitely-not-the-password');
     await dialog.getByRole('button', { name: 'Sign In', exact: true }).click();
 
     await expect(dialog.getByRole('alert')).toBeVisible();

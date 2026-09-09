@@ -33,12 +33,21 @@ export interface Profile {
   created_at: string;
 }
 
+export interface Project {
+  id: string;
+  title: string;
+  song_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Song {
   id: string;
   user_id: string;
   title: string;
   prompt: string;
   style: string;
+  lyrics: string | null;
   is_instrumental: boolean;
   duration_seconds: number;
   cover_url: string | null;
@@ -48,6 +57,7 @@ export interface Song {
   commercial_use: boolean;
   model_version: string;
   created_at: string;
+  updated_at?: string;
   /** Joined from public_profiles; absent on rows the viewer cannot resolve. */
   artist?: string;
   /** Derived per viewer, never stored on the row. */
@@ -65,6 +75,7 @@ export interface GenerationJob {
     thumbnailStyle?: string;
     instrumental?: boolean;
     seconds?: number;
+    seed?: string;
   };
   status: JobStatus;
   progress: number;

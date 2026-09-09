@@ -20,6 +20,8 @@ const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY ??
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU';
 
 const GENERATION_COST = 5;
+// Multi-line on purpose: line breaks must survive the round trip.
+const LYRICS = 'Salt on the window\nlight on the water\nwe drove until morning';
 let failures = 0;
 
 function check(label, condition, detail = '') {
@@ -102,7 +104,11 @@ async function main() {
   const started = await api('/functions/v1/generate', {
     token: alice.token,
     method: 'POST',
-    body: { prompt: 'a bright summer synth pop song about the sea', seconds: 15 },
+    body: {
+      prompt: 'a bright summer synth pop song about the sea',
+      seconds: 15,
+      lyrics: LYRICS,
+    },
   });
   check('generate returns 200', started.ok, `${started.status} ${started.text.slice(0, 200)}`);
   const job = started.json?.job;
@@ -127,6 +133,9 @@ async function main() {
   check('song defaults to private', song?.visibility === 'private', `got ${song?.visibility}`);
   check('duration was recorded', song?.duration_seconds > 0, `got ${song?.duration_seconds}`);
   check('an audio asset was written', (song?.audio_assets ?? []).length === 1);
+  // The studio collected lyrics and the pipeline used to drop them: they were
+  // written into generation_jobs.params and never copied onto the song.
+  check('the lyrics were kept', song?.lyrics === LYRICS, `got ${JSON.stringify(song?.lyrics)}`);
   check('asset has a non-trivial size', (song?.audio_assets?.[0]?.bytes ?? 0) > 10_000,
     `got ${song?.audio_assets?.[0]?.bytes}`);
 

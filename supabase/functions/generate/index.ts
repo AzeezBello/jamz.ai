@@ -19,6 +19,8 @@ Deno.serve((req) =>
     const lyrics = String(body.lyrics ?? '').trim();
     const style = String(body.style ?? '').trim();
     const thumbnailStyle = String(body.thumbnailStyle ?? '').trim();
+    // A variation is the same brief with a different seed.
+    const seed = String(body.seed ?? crypto.randomUUID());
     const instrumental = Boolean(body.instrumental);
     const seconds = Math.min(Math.max(Number(body.seconds) || 45, 15), MAX_SECONDS);
     const projectId = body.projectId ?? null;
@@ -30,7 +32,7 @@ Deno.serve((req) =>
 
     const { data, error } = await client.rpc('enqueue_generation', {
       p_prompt: prompt,
-      p_params: { lyrics, style, thumbnailStyle, instrumental, seconds },
+      p_params: { lyrics, style, thumbnailStyle, instrumental, seconds, seed },
       p_project_id: projectId,
       p_idempotency_key: idempotencyKey,
     });

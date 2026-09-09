@@ -16,6 +16,8 @@ interface GenerationState {
   dismissed: boolean;
 
   start: (options: api.GenerationOptions) => Promise<GenerationJob | null>;
+  /** Re-run a song's brief with a new seed to get a different take. */
+  createVariation: (song: Song) => Promise<GenerationJob | null>;
   cancel: () => Promise<void>;
   /** Re-attach to an in-flight job after a reload. */
   resume: () => Promise<void>;
@@ -62,7 +64,8 @@ export const useGenerationStore = create<GenerationState>()((set, get) => {
     teardown();
 
     channel = supabase
-      .channel(`generation_job:${jobId}`)
+      // Unique name per subscription; see NotificationBell for why.
+      .channel(`generation_job:${jobId}:${crypto.randomUUID()}`)
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'generation_jobs', filter: `id=eq.${jobId}` },
@@ -110,6 +113,18 @@ export const useGenerationStore = create<GenerationState>()((set, get) => {
       } finally {
         set({ submitting: false });
       }
+    },
+
+    createVariation: async (song) => {
+      return get().start({
+        prompt: song.prompt,
+        lyrics: song.lyrics ?? undefined,
+        style: song.style || undefined,
+        instrumental: song.is_instrumental,
+        seconds: song.duration_seconds || 45,
+        // A fresh seed is the whole point: same brief, different take.
+        seed: crypto.randomUUID(),
+      });
     },
 
     cancel: async () => {

@@ -13,6 +13,8 @@ export interface GenerationRequest {
   style: string;
   seconds: number;
   instrumental: boolean;
+  /** Distinguishes one take from another for the same prompt. */
+  seed: string;
 }
 
 export interface GenerationOutput {
@@ -58,6 +60,7 @@ const mockProvider: GenerationProvider = {
       prompt: `${req.prompt} ${req.style} ${req.lyrics}`.trim(),
       seconds: req.seconds,
       instrumental: req.instrumental,
+      seed: req.seed,
     });
 
     return {

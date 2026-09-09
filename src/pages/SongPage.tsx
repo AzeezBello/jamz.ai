@@ -179,6 +179,16 @@ export default function SongPage() {
           </dl>
         </div>
       </div>
+
+      {song.lyrics && (
+        <section className="mt-10 border-t border-white/10 pt-8">
+          <h2 className="text-lg font-semibold mb-4">Lyrics</h2>
+          {/* Preserve the author's line breaks; lyrics are stored verbatim. */}
+          <p className="whitespace-pre-wrap text-white/70 leading-relaxed max-w-2xl">
+            {song.lyrics}
+          </p>
+        </section>
+      )}
     </article>
   );
 }

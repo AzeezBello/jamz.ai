@@ -10,6 +10,7 @@ import {
   type Plan,
   type PlanId,
   type Profile,
+  type Project,
   type Song,
   type SongVisibility,
   type Subscription,
@@ -97,7 +98,7 @@ export async function fetchPlans(): Promise<Plan[]> {
 // ---------------------------------------------------------------------------
 
 const SONG_COLUMNS =
-  'id, user_id, title, prompt, style, is_instrumental, duration_seconds, cover_url, visibility, play_count, like_count, commercial_use, model_version, created_at';
+  'id, user_id, title, prompt, style, lyrics, is_instrumental, duration_seconds, cover_url, visibility, play_count, like_count, commercial_use, model_version, created_at, updated_at';
 
 /**
  * `songs.user_id` points at `profiles`, which RLS restricts to the owner, so
@@ -142,51 +143,171 @@ async function decorate(rows: Song[]): Promise<Song[]> {
   return attachLikes(await attachArtists(rows));
 }
 
-export async function fetchMySongs(
-  options: { search?: string; limit?: number } = {},
-): Promise<Song[]> {
+export type SongSort = 'newest' | 'oldest' | 'plays' | 'likes' | 'title' | 'longest';
+
+const SORT_COLUMN: Record<SongSort, { column: string; ascending: boolean }> = {
+  newest: { column: 'created_at', ascending: false },
+  oldest: { column: 'created_at', ascending: true },
+  plays: { column: 'play_count', ascending: false },
+  likes: { column: 'like_count', ascending: false },
+  title: { column: 'title', ascending: true },
+  longest: { column: 'duration_seconds', ascending: false },
+};
+
+export interface SongQuery {
+  search?: string;
+  sort?: SongSort;
+  visibility?: SongVisibility | 'all';
+  projectId?: string | null;
+  limit?: number;
+  offset?: number;
+}
+
+export interface SongPage {
+  songs: Song[];
+  /** True when more rows exist past this page. */
+  hasMore: boolean;
+}
+
+/** PostgREST `or` takes a comma-separated filter list, so strip its delimiters. */
+function sanitiseSearch(term: string): string {
+  return term.trim().replace(/[%,()]/g, '');
+}
+
+export const PAGE_SIZE = 30;
+
+export async function fetchMySongs(options: SongQuery = {}): Promise<SongPage> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return [];
+  if (!user) return { songs: [], hasMore: false };
+
+  const limit = options.limit ?? PAGE_SIZE;
+  const offset = options.offset ?? 0;
+  const sort = SORT_COLUMN[options.sort ?? 'newest'];
 
   let query = supabase
     .from('songs')
     .select(SONG_COLUMNS)
     .eq('user_id', user.id)
     .is('deleted_at', null)
-    .order('created_at', { ascending: false })
-    .limit(options.limit ?? 100);
+    .order(sort.column, { ascending: sort.ascending })
+    // Fetch one extra row to learn whether another page exists without a
+    // second count query.
+    .range(offset, offset + limit);
 
+  if (options.visibility && options.visibility !== 'all') {
+    query = query.eq('visibility', options.visibility);
+  }
+  if (options.projectId) {
+    query = query.eq('project_id', options.projectId);
+  }
   if (options.search?.trim()) {
-    const term = options.search.trim().replace(/[%,()]/g, '');
-    query = query.or(`title.ilike.%${term}%,prompt.ilike.%${term}%`);
+    const term = sanitiseSearch(options.search);
+    query = query.or(`title.ilike.%${term}%,prompt.ilike.%${term}%,lyrics.ilike.%${term}%`);
   }
 
   const { data, error } = await query;
   if (error) throw fromPostgrest(error, 'Could not load your library.');
-  return decorate((data ?? []) as Song[]);
+
+  const rows = (data ?? []) as Song[];
+  const hasMore = rows.length > limit;
+  return { songs: await decorate(rows.slice(0, limit)), hasMore };
 }
 
-export async function fetchPublicSongs(
-  options: { search?: string; limit?: number } = {},
-): Promise<Song[]> {
+export async function fetchPublicSongs(options: SongQuery = {}): Promise<SongPage> {
+  const limit = options.limit ?? PAGE_SIZE;
+  const offset = options.offset ?? 0;
+  const sort = SORT_COLUMN[options.sort ?? 'plays'];
+
   let query = supabase
     .from('songs')
     .select(SONG_COLUMNS)
     .eq('visibility', 'public')
     .is('deleted_at', null)
-    .order('play_count', { ascending: false })
-    .limit(options.limit ?? 24);
+    .order(sort.column, { ascending: sort.ascending })
+    .range(offset, offset + limit);
 
   if (options.search?.trim()) {
-    const term = options.search.trim().replace(/[%,()]/g, '');
+    const term = sanitiseSearch(options.search);
     query = query.or(`title.ilike.%${term}%,prompt.ilike.%${term}%`);
   }
 
   const { data, error } = await query;
   if (error) throw fromPostgrest(error, 'Could not load the feed.');
-  return decorate((data ?? []) as Song[]);
+
+  const rows = (data ?? []) as Song[];
+  const hasMore = rows.length > limit;
+  return { songs: await decorate(rows.slice(0, limit)), hasMore };
+}
+
+export interface LibraryStats {
+  song_count: number;
+  play_total: number;
+  like_total: number;
+  public_count: number;
+  seconds_total: number;
+}
+
+/**
+ * Totals for the whole library, not just the rows on screen. The dashboard
+ * used to sum the loaded array, so the figures shifted while you searched.
+ */
+export async function fetchLibraryStats(): Promise<LibraryStats> {
+  const { data, error } = await supabase.rpc('library_stats');
+  if (error) throw fromPostgrest(error, 'Could not load your library totals.');
+  const row = (Array.isArray(data) ? data[0] : data) ?? {};
+  return {
+    song_count: Number(row.song_count ?? 0),
+    play_total: Number(row.play_total ?? 0),
+    like_total: Number(row.like_total ?? 0),
+    public_count: Number(row.public_count ?? 0),
+    seconds_total: Number(row.seconds_total ?? 0),
+  };
+}
+
+/** The eight stock covers the worker also chooses from. */
+export const STOCK_COVERS = Array.from({ length: 8 }, (_, i) => `/images/song-${i + 1}.jpg`);
+
+/**
+ * Swap the artwork for a different stock cover.
+ *
+ * Cover art is a stand-in until a cover model is wired up, so a "re-roll" is
+ * genuinely just picking another image — deliberately never the current one,
+ * so the button always visibly does something.
+ */
+export async function rerollCover(songId: string, currentCover: string | null): Promise<Song> {
+  const options = STOCK_COVERS.filter((cover) => cover !== currentCover);
+  const next = options[Math.floor(Math.random() * options.length)];
+
+  const { data, error } = await supabase
+    .from('songs')
+    .update({ cover_url: next })
+    .eq('id', songId)
+    .select(SONG_COLUMNS)
+    .single();
+
+  if (error) throw fromPostgrest(error, 'Could not change the cover.');
+  const [song] = await decorate([data as Song]);
+  return song;
+}
+
+/** Title and lyrics are the only song fields a client may edit; a trigger
+ *  rejects everything else. */
+export async function updateSongDetails(
+  songId: string,
+  patch: { title?: string; lyrics?: string | null },
+): Promise<Song> {
+  const { data, error } = await supabase
+    .from('songs')
+    .update(patch)
+    .eq('id', songId)
+    .select(SONG_COLUMNS)
+    .single();
+
+  if (error) throw fromPostgrest(error, 'Could not save those changes.');
+  const [song] = await decorate([data as Song]);
+  return song;
 }
 
 export async function fetchSong(id: string): Promise<Song | null> {
@@ -235,6 +356,58 @@ export async function getAudioUrl(songId: string, download = false): Promise<str
 }
 
 // ---------------------------------------------------------------------------
+// Projects
+// ---------------------------------------------------------------------------
+
+export async function fetchProjects(): Promise<Project[]> {
+  const { data, error } = await supabase.rpc('project_summaries');
+  if (error) throw fromPostgrest(error, 'Could not load your projects.');
+  return (data ?? []) as Project[];
+}
+
+export async function createProject(title: string): Promise<Project> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new ApiError('not_authenticated', 'Sign in to continue.');
+
+  const { data, error } = await supabase
+    .from('projects')
+    .insert({ title: title.trim() || 'Untitled project', user_id: user.id })
+    .select('id, title, created_at, updated_at')
+    .single();
+
+  if (error) throw fromPostgrest(error, 'Could not create that project.');
+  return { ...(data as Omit<Project, 'song_count'>), song_count: 0 };
+}
+
+export async function renameProject(projectId: string, title: string): Promise<void> {
+  const { error } = await supabase
+    .from('projects')
+    .update({ title: title.trim(), updated_at: new Date().toISOString() })
+    .eq('id', projectId);
+  if (error) throw fromPostgrest(error, 'Could not rename that project.');
+}
+
+/** Songs survive: the RPC unfiles them rather than cascading the delete. */
+export async function deleteProject(projectId: string): Promise<void> {
+  const { error } = await supabase.rpc('delete_project', { p_project_id: projectId });
+  if (error) throw fromPostgrest(error, 'Could not delete that project.');
+}
+
+export async function moveSongsToProject(
+  songIds: string[],
+  projectId: string | null,
+): Promise<number> {
+  const { data, error } = await supabase.rpc('move_songs_to_project', {
+    p_song_ids: songIds,
+    p_project_id: projectId,
+  });
+  if (error) throw fromPostgrest(error, 'Could not move those songs.');
+  return Number(data ?? 0);
+}
+
+// ---------------------------------------------------------------------------
 // Generation
 // ---------------------------------------------------------------------------
 
@@ -245,6 +418,8 @@ export interface GenerationOptions {
   thumbnailStyle?: string;
   instrumental?: boolean;
   seconds?: number;
+  /** Omit for a fresh take; the server generates one when absent. */
+  seed?: string;
   idempotencyKey?: string;
 }
 
