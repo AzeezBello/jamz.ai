@@ -40,6 +40,7 @@ export default function Hero() {
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   const session = useAuthStore((s) => s.session);
+  const initializing = useAuthStore((s) => s.initializing);
   const profile = useAuthStore((s) => s.profile);
   const { start, submitting } = useGenerationStore();
   const publicSongs = useLibraryStore((s) => s.publicSongs);
@@ -117,6 +118,11 @@ export default function Hero() {
   }, []);
 
   const handleCreate = async () => {
+    // On a fresh page load the session is null until getSession() resolves.
+    // Acting on that would show the sign-in dialog to someone who is already
+    // signed in, so wait for auth to settle before deciding.
+    if (initializing) return;
+
     if (!session) {
       setShowAuthModal(true);
       return;
@@ -244,7 +250,7 @@ export default function Hero() {
 
             <Button
               onClick={() => void handleCreate()}
-              disabled={submitting}
+              disabled={submitting || initializing}
               className="gradient-coral text-black font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition-all hover:scale-105 flex items-center gap-2"
             >
               {submitting ? (

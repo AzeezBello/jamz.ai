@@ -229,7 +229,62 @@ async function main() {
     refused.json?.error?.code === 'insufficient_credits', `got ${refused.json?.error?.code}`);
 
   // -------------------------------------------------------------------------
-  console.log('\n8. the worker is not callable from the browser');
+  console.log('\n8. AI lyrics are written and metered');
+  const lyricist = await createUser('lyricist');
+  const beforeLyrics = await credits(lyricist);
+
+  const written = await api('/functions/v1/generate-lyrics', {
+    token: lyricist.token,
+    method: 'POST',
+    body: { prompt: 'a defiant song about leaving a small town', style: 'indie rock' },
+  });
+  check('generate-lyrics returns 200', written.ok, `${written.status} ${written.text.slice(0, 200)}`);
+  check('a title came back', Boolean(written.json?.title));
+  check('lyrics have several lines', (written.json?.lyrics ?? '').split('\n').length > 6);
+  check('section markers are present', /\[(Verse|Chorus)/.test(written.json?.lyrics ?? ''));
+  check('one credit was charged', (await credits(lyricist)) === beforeLyrics - 1,
+    `expected ${beforeLyrics - 1}, got ${await credits(lyricist)}`);
+
+  // Replaying the same idempotency key must not charge again.
+  const balanceAfterFirst = await credits(lyricist);
+  await api('/functions/v1/generate-lyrics', {
+    token: lyricist.token,
+    method: 'POST',
+    headers: { 'x-idempotency-key': 'smoke-fixed-key' },
+    body: { prompt: 'a defiant song about leaving a small town' },
+  });
+  await api('/functions/v1/generate-lyrics', {
+    token: lyricist.token,
+    method: 'POST',
+    headers: { 'x-idempotency-key': 'smoke-fixed-key' },
+    body: { prompt: 'a defiant song about leaving a small town' },
+  });
+  check('a replayed request is charged once', (await credits(lyricist)) === balanceAfterFirst - 1,
+    `expected ${balanceAfterFirst - 1}, got ${await credits(lyricist)}`);
+
+  // A different user replaying the same key must still be charged: keys are
+  // scoped per user, so one account cannot spend against another's.
+  const freeloader = await createUser('freeloader');
+  const freeloaderBefore = await credits(freeloader);
+  await api('/functions/v1/generate-lyrics', {
+    token: freeloader.token,
+    method: 'POST',
+    headers: { 'x-idempotency-key': 'smoke-fixed-key' },
+    body: { prompt: 'a defiant song about leaving a small town' },
+  });
+  check(
+    "another user's identical key is still charged",
+    (await credits(freeloader)) === freeloaderBefore - 1,
+    `expected ${freeloaderBefore - 1}, got ${await credits(freeloader)}`,
+  );
+
+  const shortBrief = await api('/functions/v1/generate-lyrics', {
+    token: lyricist.token, method: 'POST', body: { prompt: 'x' },
+  });
+  check('an empty brief is refused with 400', shortBrief.status === 400, `got ${shortBrief.status}`);
+
+  // -------------------------------------------------------------------------
+  console.log('\n9. the worker is not callable from the browser');
   const worker = await api('/functions/v1/worker', {
     token: alice.token, method: 'POST', body: {},
   });

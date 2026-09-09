@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import IconButton from '@/components/ui/icon-button';
 import { Slider } from '@/components/ui/slider';
 import {
   AlertCircle,
@@ -189,43 +190,43 @@ export default function AudioPlayer() {
               </div>
 
               <div className="flex items-center gap-1">
-                <Button
+                <IconButton
                   variant="ghost"
                   size="icon"
                   onClick={() => void copyShareLink(currentSong.id)}
-                  aria-label="Copy share link"
+                  label="Copy share link"
                   className="text-white/50 hover:text-white hover:bg-white/10"
                 >
                   <Share2 className="w-4 h-4" aria-hidden="true" />
-                </Button>
-                <Button
+                </IconButton>
+                <IconButton
                   variant="ghost"
                   size="icon"
                   onClick={() => void downloadSong(currentSong.id, currentSong.title)}
-                  aria-label="Download this song"
+                  label="Download this song"
                   className="text-white/50 hover:text-white hover:bg-white/10"
                 >
                   <Download className="w-4 h-4" aria-hidden="true" />
-                </Button>
-                <Button
+                </IconButton>
+                <IconButton
                   variant="ghost"
                   size="icon"
                   onClick={() => setShowQueue(!showQueue)}
-                  aria-label="Toggle queue"
+                  label="Toggle queue"
                   aria-expanded={showQueue}
                   className={`text-white/50 hover:text-white hover:bg-white/10 ${showQueue ? 'text-[#ff6b6b]' : ''}`}
                 >
                   <ListMusic className="w-4 h-4" aria-hidden="true" />
-                </Button>
-                <Button
+                </IconButton>
+                <IconButton
                   variant="ghost"
                   size="icon"
                   onClick={stop}
-                  aria-label="Close player"
+                  label="Close player"
                   className="text-white/50 hover:text-white hover:bg-white/10"
                 >
                   <X className="w-4 h-4" aria-hidden="true" />
-                </Button>
+                </IconButton>
               </div>
             </div>
           </div>

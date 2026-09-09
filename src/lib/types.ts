@@ -30,6 +30,9 @@ export interface Profile {
   daily_granted_on: string | null;
   marketing_opt_in: boolean;
   notify_on_complete: boolean;
+  onboarded_at: string | null;
+  tour_completed_at: string | null;
+  dismissed_tips: string[];
   created_at: string;
 }
 

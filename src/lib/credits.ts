@@ -10,6 +10,9 @@
 /** Must match `generation_cost()` in the database. */
 export const GENERATION_COST = 5;
 
+/** Must match `lyrics_cost()` in the database. */
+export const LYRICS_COST = 1;
+
 export function canAfford(balance: number, cost = GENERATION_COST): boolean {
   return balance >= cost;
 }

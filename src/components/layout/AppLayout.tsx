@@ -4,6 +4,9 @@ import Navigation from '@/sections/Navigation';
 import Footer from '@/sections/Footer';
 import AudioPlayer from '@/components/audio/AudioPlayer';
 import GenerationModal from '@/components/modals/GenerationModal';
+import OnboardingDialog from '@/components/onboarding/OnboardingDialog';
+import ProductTour from '@/components/onboarding/ProductTour';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { useAuthStore } from '@/store/authStore';
 import { useGenerationStore } from '@/store/generationStore';
 import { usePlayerStore } from '@/store/playerStore';
@@ -25,20 +28,24 @@ export default function AppLayout() {
   }, [pathname]);
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-x-hidden">
-      <a
-        href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[60] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-white focus:text-black focus:font-semibold"
-      >
-        Skip to content
-      </a>
-      <Navigation />
-      <main id="main" className={`${session ? 'md:pl-64' : ''} ${hasPlayer ? 'pb-24' : ''}`}>
-        <Outlet />
-      </main>
-      <Footer />
-      <AudioPlayer />
-      <GenerationModal />
-    </div>
+    <TooltipProvider delayDuration={300}>
+      <div className="min-h-screen bg-black text-white overflow-x-hidden">
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[60] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-white focus:text-black focus:font-semibold"
+        >
+          Skip to content
+        </a>
+        <Navigation />
+        <main id="main" className={`${session ? 'md:pl-64' : ''} ${hasPlayer ? 'pb-24' : ''}`}>
+          <Outlet />
+        </main>
+        <Footer />
+        <AudioPlayer />
+        <GenerationModal />
+        <OnboardingDialog />
+        <ProductTour />
+      </div>
+    </TooltipProvider>
   );
 }

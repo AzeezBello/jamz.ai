@@ -72,7 +72,15 @@ export async function updateProfile(
   patch: Partial<
     Pick<
       Profile,
-      'display_name' | 'handle' | 'bio' | 'avatar_url' | 'marketing_opt_in' | 'notify_on_complete'
+      | 'display_name'
+      | 'handle'
+      | 'bio'
+      | 'avatar_url'
+      | 'marketing_opt_in'
+      | 'notify_on_complete'
+      | 'onboarded_at'
+      | 'tour_completed_at'
+      | 'dismissed_tips'
     >
   >,
 ): Promise<Profile> {
@@ -421,6 +429,25 @@ export interface GenerationOptions {
   /** Omit for a fresh take; the server generates one when absent. */
   seed?: string;
   idempotencyKey?: string;
+}
+
+export interface LyricsResult {
+  title: string;
+  lyrics: string;
+  provider: string;
+}
+
+/**
+ * Ask the model for a lyric before generating the song. Any words the user has
+ * already written are sent along so the result develops them rather than
+ * discarding them.
+ */
+export async function generateLyrics(options: {
+  prompt: string;
+  style?: string;
+  existing?: string;
+}): Promise<LyricsResult> {
+  return callFunction<LyricsResult>('generate-lyrics', options);
 }
 
 export async function startGeneration(options: GenerationOptions): Promise<GenerationJob> {

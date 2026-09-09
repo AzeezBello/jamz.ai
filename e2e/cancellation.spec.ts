@@ -17,7 +17,7 @@ test.describe('cancellation', () => {
     await expect.poll(() => readCredits(page), { timeout: 30_000 }).toBe(before);
 
     await page.goto('/dashboard');
-    await expect(page.getByText('No songs yet')).toBeVisible();
+    await expect(page.getByText('Your library starts with one sentence')).toBeVisible();
   });
 
   test('closing the modal leaves the job running in the background', async ({ page }) => {

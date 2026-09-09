@@ -5,10 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
-import { Dice5, ImagePlus, Loader2, Mic2, Music2, Sparkles } from 'lucide-react';
+import { Dice5, ImagePlus, Loader2, Mic2, Music2, Sparkles, Wand2 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useGenerationStore } from '@/store/generationStore';
-import { GENERATION_COST, canAfford } from '@/lib/credits';
+import { GENERATION_COST, LYRICS_COST, canAfford } from '@/lib/credits';
+import { generateLyrics } from '@/lib/api';
+import { useAuthStore as useAuth } from '@/store/authStore';
 import { formatDuration } from '@/lib/format';
 
 const IDEAS = [
@@ -33,6 +35,31 @@ export default function CreateStudio() {
   const [thumbnailStyle, setThumbnailStyle] = useState(THUMBNAILS[0].value);
   const [instrumental, setInstrumental] = useState(false);
   const [seconds, setSeconds] = useState(45);
+  const [writingLyrics, setWritingLyrics] = useState(false);
+
+  const writeLyrics = async () => {
+    if (prompt.trim().length < 3) {
+      toast.error('Describe the song first, then I can write words for it.');
+      return;
+    }
+
+    setWritingLyrics(true);
+    try {
+      const result = await generateLyrics({
+        prompt: prompt.trim(),
+        style: style.trim() || undefined,
+        // Send anything already written so it is developed, not discarded.
+        existing: lyrics.trim() || undefined,
+      });
+      setLyrics(result.lyrics);
+      toast.success(`Wrote “${result.title}” — edit it however you like.`);
+      await useAuth.getState().refreshProfile();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not write lyrics.');
+    } finally {
+      setWritingLyrics(false);
+    }
+  };
 
   const submit = async () => {
     if (prompt.trim().length < 3) {
@@ -60,7 +87,10 @@ export default function CreateStudio() {
   };
 
   return (
-    <section className="mb-10 border border-white/10 bg-white/[0.04] rounded-2xl p-5 md:p-7">
+    <section
+      data-tour="studio"
+      className="mb-10 border border-white/10 bg-white/[0.04] rounded-2xl p-5 md:p-7"
+    >
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
           <p className="text-[#ff8e8e] text-xs uppercase tracking-[0.2em] font-semibold mb-2">
@@ -105,14 +135,32 @@ export default function CreateStudio() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="studio-lyrics" className="text-white/70 flex items-center gap-2">
-              <Mic2 className="w-4 h-4" aria-hidden="true" /> Lyrics
-            </Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="studio-lyrics" className="text-white/70 flex items-center gap-2">
+                <Mic2 className="w-4 h-4" aria-hidden="true" /> Lyrics
+              </Label>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => void writeLyrics()}
+                disabled={writingLyrics}
+                className="text-[#ff8e8e] hover:text-white hover:bg-white/10 -my-1"
+              >
+                {writingLyrics ? (
+                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" aria-hidden="true" />
+                ) : (
+                  <Wand2 className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />
+                )}
+                {lyrics.trim() ? 'Rewrite with AI' : 'Write with AI'}
+                <span className="ml-1.5 text-white/30 text-[11px]">{LYRICS_COST} credit</span>
+              </Button>
+            </div>
             <textarea
               id="studio-lyrics"
               value={lyrics}
               onChange={(event) => setLyrics(event.target.value)}
-              placeholder="Add lyrics or leave empty for an AI-written vocal concept"
+              placeholder="Write your own, or press Write with AI — you can edit whatever comes back before creating the song."
               rows={5}
               className="w-full resize-y rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:ring-1 focus:ring-[#ff6b6b]"
             />
@@ -156,7 +204,7 @@ export default function CreateStudio() {
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2" data-tour="studio-length">
             <div className="flex items-center justify-between">
               <Label htmlFor="studio-length" className="text-white/70">
                 Length

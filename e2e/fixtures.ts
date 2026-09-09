@@ -38,8 +38,29 @@ export async function signUp(page: Page, email = uniqueEmail(), name = 'E2E Test
 
   // With confirmations disabled locally the session lands immediately; with
   // them on, the run needs a mail catcher (see e2e/README.md).
+  // Every new account is met by the first-run intro, and it is modal — so it
+  // has to go before anything else on the page can be found. Its appearance is
+  // also the signal that the session and profile have landed.
+  await dismissOnboarding(page, { wait: 25_000 });
+
   await expect(accountButton(page)).toBeVisible({ timeout: 20_000 });
   return { email, name };
+}
+
+/**
+ * Closes the first-run intro. It is a modal dialog, so until it goes away
+ * Radix hides the rest of the page from the accessibility tree and nothing
+ * else is findable. Safe to call when the intro is not showing.
+ */
+export async function dismissOnboarding(page: Page, { wait = 15_000 } = {}) {
+  const intro = page.getByRole('dialog').filter({ hasText: 'Describe it, and Jamz makes it' });
+  try {
+    await intro.waitFor({ state: 'visible', timeout: wait });
+  } catch {
+    return; // Already onboarded, or not signed in.
+  }
+  await page.getByRole('button', { name: 'Skip' }).click();
+  await expect(intro).toBeHidden();
 }
 
 export async function signIn(page: Page, email: string, password = TEST_PASSWORD) {
@@ -62,11 +83,18 @@ export async function signOut(page: Page) {
 /** Reads the credit balance shown in the header chip on /dashboard. */
 export async function readCredits(page: Page): Promise<number> {
   await page.goto('/dashboard');
+  await dismissOnboarding(page, { wait: 3_000 });
+
+  // The studio panel also shows a balance, so read the header chip, which is
+  // the only one that is a link to billing.
   const text = await page
-    .getByText(/\d+ credits/)
+    .getByRole('link', { name: /\d+ credits/ })
     .first()
     .innerText();
-  return Number(text.replace(/\D/g, ''));
+
+  const digits = text.replace(/\D/g, '');
+  if (!digits) throw new Error(`Could not read a credit balance from "${text}"`);
+  return Number(digits);
 }
 
 export async function generateSong(page: Page, prompt: string) {

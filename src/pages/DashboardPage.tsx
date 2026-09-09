@@ -14,7 +14,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Globe, Heart, Loader2, Milestone, Music, Play, Sparkles } from 'lucide-react';
+import { Compass, Globe, Heart, Loader2, Music, Play, Sparkles, Wand2 } from 'lucide-react';
+import EmptyState from '@/components/onboarding/EmptyState';
+import { useOnboardingStore } from '@/store/onboardingStore';
 import CreateStudio from '@/components/studio/CreateStudio';
 import GenerationActivity from '@/components/dashboard/GenerationActivity';
 import LibraryToolbar from '@/components/dashboard/LibraryToolbar';
@@ -26,6 +28,7 @@ import EditSongDialog from '@/components/dashboard/EditSongDialog';
 import { useAuthStore } from '@/store/authStore';
 import { useLibraryStore } from '@/store/libraryStore';
 import { formatCount } from '@/lib/format';
+import { GENERATION_COST } from '@/lib/credits';
 import type { Song } from '@/lib/types';
 
 export default function DashboardPage() {
@@ -58,6 +61,7 @@ export default function DashboardPage() {
   const [pendingDelete, setPendingDelete] = useState<Song | null>(null);
   const [editing, setEditing] = useState<Song | null>(null);
   const [searchParams] = useSearchParams();
+  const openTour = useOnboardingStore((state) => state.openTour);
 
   useEffect(() => {
     if (searchParams.get('tab') === 'discover') setTab('discover');
@@ -102,19 +106,29 @@ export default function DashboardPage() {
     <div className="max-w-[1400px] mx-auto px-6 pt-28 pb-32">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <h1 className="text-3xl font-bold">My Dashboard</h1>
-        <Link
-          to="/billing"
-          className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
-        >
-          <Sparkles className="w-4 h-4 text-[#ff6b6b]" aria-hidden="true" />
-          <span className="text-sm">{profile?.credit_balance ?? 0} credits</span>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            onClick={openTour}
+            className="text-white/50 hover:text-white text-sm"
+          >
+            <Compass className="w-4 h-4 mr-2" aria-hidden="true" />
+            Take the tour
+          </Button>
+          <Link
+            to="/billing"
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+          >
+            <Sparkles className="w-4 h-4 text-[#ff6b6b]" aria-hidden="true" />
+            <span className="text-sm">{profile?.credit_balance ?? 0} credits</span>
+          </Link>
+        </div>
       </div>
 
       <CreateStudio />
       <GenerationActivity />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div data-tour="library-stats" className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <StatCard icon={Music} label="Total songs" value={String(stats?.song_count ?? 0)} />
         <StatCard icon={Play} label="Total plays" value={formatCount(stats?.play_total ?? 0)} />
         <StatCard icon={Heart} label="Total likes" value={formatCount(stats?.like_total ?? 0)} />
@@ -148,17 +162,19 @@ export default function DashboardPage() {
             </Tabs>
           </div>
 
-          <LibraryToolbar
-            search={search}
-            onSearch={(value) => setQuery({ search: value })}
-            sort={sort}
-            onSort={(value) => setQuery({ sort: value })}
-            visibility={visibility}
-            onVisibility={(value) => setQuery({ visibility: value })}
-            view={view}
-            onView={setView}
-            showVisibilityFilter={owned}
-          />
+          <div data-tour="library-toolbar">
+            <LibraryToolbar
+              search={search}
+              onSearch={(value) => setQuery({ search: value })}
+              sort={sort}
+              onSort={(value) => setQuery({ sort: value })}
+              visibility={visibility}
+              onVisibility={(value) => setQuery({ visibility: value })}
+              view={view}
+              onView={setView}
+              showVisibilityFilter={owned}
+            />
+          </div>
 
           {owned && <BulkActionBar songs={mySongs} />}
 
@@ -185,40 +201,76 @@ export default function DashboardPage() {
             ) : null}
 
             {!loading && !songs.length && (
-              <div className="text-center py-16 px-6">
+              <>
                 {owned ? (
-                  <>
-                    <Milestone
-                      className="w-10 h-10 text-white/20 mx-auto mb-4"
-                      aria-hidden="true"
+                  search || visibility !== 'all' || projectId ? (
+                    <EmptyState
+                      icon={Music}
+                      title="Nothing matches those filters"
+                      description="No songs in your library match what you are looking for right now."
+                      tips={[
+                        'Search looks at titles, prompts and lyrics — try a word from the brief you wrote.',
+                        'The visibility filter hides songs: set it back to “All songs” to see everything.',
+                        'A project filter only shows songs filed into that project.',
+                      ]}
+                      action={
+                        <Button
+                          variant="outline"
+                          onClick={() =>
+                            setQuery({ search: '', visibility: 'all', projectId: null })
+                          }
+                          className="border-white/20 text-white hover:bg-white/10"
+                        >
+                          Clear filters
+                        </Button>
+                      }
                     />
-                    <p className="text-white/70 mb-1">
-                      {search || visibility !== 'all'
-                        ? 'Nothing matches those filters'
-                        : 'No songs yet'}
-                    </p>
-                    <p className="text-white/40 text-sm mb-6">
-                      {search || visibility !== 'all' || projectId
-                        ? 'Try a different search, or clear the filters.'
-                        : 'Describe a song in the studio above and Jamz will make it.'}
-                    </p>
-                    {(search || visibility !== 'all' || projectId) && (
-                      <Button
-                        variant="outline"
-                        onClick={() => setQuery({ search: '', visibility: 'all', projectId: null })}
-                        className="border-white/20 text-white hover:bg-white/10"
-                      >
-                        Clear filters
-                      </Button>
-                    )}
-                  </>
+                  ) : (
+                    <EmptyState
+                      icon={Wand2}
+                      title="Your library starts with one sentence"
+                      description="Describe a song in the studio above and it will appear here in about a minute."
+                      tips={[
+                        'Mood and story work better than genre alone — “a slow song about leaving a town at dawn”.',
+                        'Add your own lyrics, or leave them blank and let the model write the vocal.',
+                        `Each song costs ${GENERATION_COST} credits, and you get them back if it fails or you cancel.`,
+                        'Songs are private until you choose to share them.',
+                      ]}
+                      action={
+                        <>
+                          <Button
+                            onClick={() =>
+                              document
+                                .querySelector('[data-tour="studio"]')
+                                ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                            }
+                            className="gradient-coral text-black font-semibold"
+                          >
+                            <Wand2 className="w-4 h-4 mr-2" aria-hidden="true" /> Go to the studio
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={openTour}
+                            className="border-white/20 text-white hover:bg-white/10"
+                          >
+                            <Compass className="w-4 h-4 mr-2" aria-hidden="true" /> Take the tour
+                          </Button>
+                        </>
+                      }
+                    />
+                  )
                 ) : (
-                  <>
-                    <Music className="w-10 h-10 text-white/20 mx-auto mb-4" aria-hidden="true" />
-                    <p className="text-white/50">No public songs to show yet.</p>
-                  </>
+                  <EmptyState
+                    icon={Globe}
+                    title="Nothing public yet"
+                    description="Discover shows songs people have chosen to publish. It is quiet in here for now."
+                    tips={[
+                      'Publish one of your own: open a song’s menu and set its sharing to Public.',
+                      'Unlisted is the middle ground — anyone with the link can listen, but it stays out of Discover.',
+                    ]}
+                  />
                 )}
-              </div>
+              </>
             )}
 
             {hasMore && (
@@ -290,7 +342,13 @@ function StatCard({
   value: string;
 }) {
   return (
-    <div className="bg-white/5 rounded-xl p-5 border border-white/10">
+    // Grouped and labelled so the number is announced with the thing it counts
+    // rather than as a bare figure floating next to some text.
+    <div
+      role="group"
+      aria-label={label}
+      className="bg-white/5 rounded-xl p-5 border border-white/10"
+    >
       <div className="flex items-center gap-2 mb-2">
         <Icon className="w-4 h-4 text-[#ff6b6b]" aria-hidden="true" />
         <span className="text-white/50 text-sm">{label}</span>
