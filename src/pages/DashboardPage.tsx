@@ -46,6 +46,8 @@ export default function DashboardPage() {
     setQuery,
     loadMySongs,
     loadPublicSongs,
+    loadLikedSongs,
+    likedSongs,
     loadMoreMine,
     loadMorePublic,
     loadStats,
@@ -54,7 +56,7 @@ export default function DashboardPage() {
     projectId,
   } = useLibraryStore();
 
-  const [tab, setTab] = useState<'library' | 'discover'>('library');
+  const [tab, setTab] = useState<'library' | 'discover' | 'favourites'>('library');
   const [view, setView] = useState<'list' | 'grid'>('list');
   const [pendingDelete, setPendingDelete] = useState<Song | null>(null);
   const [editing, setEditing] = useState<Song | null>(null);
@@ -62,7 +64,8 @@ export default function DashboardPage() {
   const openTour = useOnboardingStore((state) => state.openTour);
 
   useEffect(() => {
-    if (searchParams.get('tab') === 'discover') setTab('discover');
+    const requested = searchParams.get('tab');
+    if (requested === 'discover' || requested === 'favourites') setTab(requested);
   }, [searchParams]);
 
   useEffect(() => {
@@ -74,18 +77,19 @@ export default function DashboardPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tab === 'library') void loadMySongs();
+      else if (tab === 'favourites') void loadLikedSongs();
       else void loadPublicSongs();
     }, 250);
     return () => clearTimeout(timer);
-  }, [search, sort, visibility, projectId, tab, loadMySongs, loadPublicSongs]);
+  }, [search, sort, visibility, projectId, tab, loadMySongs, loadPublicSongs, loadLikedSongs]);
 
   useEffect(() => {
     clearSelection();
   }, [tab, clearSelection]);
 
-  const songs = tab === 'library' ? mySongs : publicSongs;
-  const loading = tab === 'library' ? loadingMine : loadingPublic;
-  const hasMore = tab === 'library' ? hasMoreMine : hasMorePublic;
+  const songs = tab === 'library' ? mySongs : tab === 'favourites' ? likedSongs : publicSongs;
+  const loading = tab === 'library' ? loadingMine : tab === 'favourites' ? false : loadingPublic;
+  const hasMore = tab === 'library' ? hasMoreMine : tab === 'favourites' ? false : hasMorePublic;
   const owned = tab === 'library';
 
   const handleDelete = async () => {
@@ -124,7 +128,10 @@ export default function DashboardPage() {
       <div>
         <div className="min-w-0">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
-            <Tabs value={tab} onValueChange={(value) => setTab(value as 'library' | 'discover')}>
+            <Tabs
+              value={tab}
+              onValueChange={(value) => setTab(value as 'library' | 'discover' | 'favourites')}
+            >
               <TabsList className="bg-white/5">
                 <TabsTrigger
                   value="library"
@@ -137,6 +144,12 @@ export default function DashboardPage() {
                   className="data-[state=active]:bg-[#ff6b6b] data-[state=active]:text-black"
                 >
                   Discover
+                </TabsTrigger>
+                <TabsTrigger
+                  value="favourites"
+                  className="data-[state=active]:bg-[#ff6b6b] data-[state=active]:text-black"
+                >
+                  Favourites
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -241,13 +254,24 @@ export default function DashboardPage() {
                   )
                 ) : (
                   <EmptyState
-                    icon={Globe}
-                    title="Nothing public yet"
-                    description="Discover shows songs people have chosen to publish. It is quiet in here for now."
-                    tips={[
-                      'Publish one of your own: open a song’s menu and set its sharing to Public.',
-                      'Unlisted is the middle ground — anyone with the link can listen, but it stays out of Discover.',
-                    ]}
+                    icon={tab === 'favourites' ? Heart : Globe}
+                    title={tab === 'favourites' ? 'Nothing saved yet' : 'Nothing public yet'}
+                    description={
+                      tab === 'favourites'
+                        ? 'Songs you like are collected here, from your own library and from Discover.'
+                        : 'Discover shows songs people have chosen to publish. It is quiet in here for now.'
+                    }
+                    tips={
+                      tab === 'favourites'
+                        ? [
+                            'Press the heart on any song row, card, or in the player bar.',
+                            'Favourites follow your account, so they are there on every device you sign in from.',
+                          ]
+                        : [
+                            'Publish one of your own: open a song’s menu and set its sharing to Public.',
+                            'Unlisted is the middle ground — anyone with the link can listen, but it stays out of Discover.',
+                          ]
+                    }
                   />
                 )}
               </>

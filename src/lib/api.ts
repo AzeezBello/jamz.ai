@@ -611,6 +611,39 @@ export async function deleteAccount(confirmEmail: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Favourites and creator profiles
+// ---------------------------------------------------------------------------
+
+export async function fetchLikedSongs(limit = 50): Promise<Song[]> {
+  const { data, error } = await supabase.rpc('liked_songs', { p_limit: limit, p_offset: 0 });
+  if (error) throw fromPostgrest(error, 'Could not load your favourites.');
+  return decorate((data ?? []) as Song[]);
+}
+
+export interface CreatorProfile {
+  id: string;
+  handle: string;
+  display_name: string;
+  avatar_url: string | null;
+  bio: string;
+  created_at: string;
+  song_count: number;
+  play_total: number;
+  like_total: number;
+}
+
+export async function fetchCreator(handle: string): Promise<CreatorProfile | null> {
+  const { data } = await supabase.rpc('creator_profile', { p_handle: handle });
+  const row = Array.isArray(data) ? data[0] : data;
+  return (row as CreatorProfile) ?? null;
+}
+
+export async function fetchCreatorSongs(handle: string, limit = 30): Promise<Song[]> {
+  const { data } = await supabase.rpc('creator_songs', { p_handle: handle, p_limit: limit });
+  return decorate((data ?? []) as Song[]);
+}
+
+// ---------------------------------------------------------------------------
 // Moderation
 // ---------------------------------------------------------------------------
 

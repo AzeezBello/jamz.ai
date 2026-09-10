@@ -10,6 +10,7 @@ export type LibraryFilter = SongVisibility | 'all';
 interface LibraryState {
   mySongs: Song[];
   publicSongs: Song[];
+  likedSongs: Song[];
   stats: api.LibraryStats | null;
 
   loadingMine: boolean;
@@ -31,6 +32,7 @@ interface LibraryState {
   ) => void;
   loadMySongs: () => Promise<void>;
   loadPublicSongs: () => Promise<void>;
+  loadLikedSongs: () => Promise<void>;
   loadMoreMine: () => Promise<void>;
   loadMorePublic: () => Promise<void>;
   loadStats: () => Promise<void>;
@@ -56,6 +58,7 @@ interface LibraryState {
 const EMPTY = {
   mySongs: [] as Song[],
   publicSongs: [] as Song[],
+  likedSongs: [] as Song[],
   stats: null,
   loadingMine: false,
   loadingPublic: false,
@@ -111,6 +114,14 @@ export const useLibraryStore = create<LibraryState>()((set, get) => ({
       set({ error: message(err, 'Could not load the feed.') });
     } finally {
       set({ loadingPublic: false });
+    }
+  },
+
+  loadLikedSongs: async () => {
+    try {
+      set({ likedSongs: await api.fetchLikedSongs() });
+    } catch (err) {
+      set({ error: message(err, 'Could not load your favourites.') });
     }
   },
 
@@ -196,6 +207,12 @@ export const useLibraryStore = create<LibraryState>()((set, get) => ({
     try {
       const { liked, likeCount } = await api.toggleLike(songId);
       get().upsertSong({ ...current, is_liked: liked, like_count: likeCount });
+      // An unliked song has to leave the favourites list immediately.
+      set({
+        likedSongs: liked
+          ? get().likedSongs
+          : get().likedSongs.filter((song) => song.id !== songId),
+      });
     } catch (err) {
       get().upsertSong(current);
       set({ error: message(err, 'Could not update the like.') });

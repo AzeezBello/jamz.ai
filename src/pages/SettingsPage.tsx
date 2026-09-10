@@ -134,8 +134,14 @@ export default function SettingsPage() {
             value={handle}
             onChange={(e) => setHandle(e.target.value)}
             placeholder="yourname"
+            aria-describedby="handle-help"
             className="bg-white/5 border-white/10 text-white"
           />
+          <p id="handle-help" className="text-white/30 text-xs">
+            {handle.trim()
+              ? `Your public page is at ${window.location.origin}/u/${handle.trim()}`
+              : 'Set a handle to get a public creator page others can browse.'}
+          </p>
         </div>
 
         <div className="space-y-2">

@@ -14,6 +14,7 @@ const Landing = lazy(() => import('@/pages/Landing'));
 const PricingPage = lazy(() => import('@/pages/PricingPage'));
 const LegalPage = lazy(() => import('@/pages/LegalPage'));
 const ModerationPage = lazy(() => import('@/pages/ModerationPage'));
+const CreatorPage = lazy(() => import('@/pages/CreatorPage'));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const SongPage = lazy(() => import('@/pages/SongPage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
@@ -57,6 +58,7 @@ function App() {
               <Route path="/legal/privacy" element={<LegalPage />} />
               <Route path="/legal/ai-disclosure" element={<LegalPage />} />
               <Route path="/song/:id" element={<SongPage />} />
+              <Route path="/u/:handle" element={<CreatorPage />} />
               <Route path="/auth/callback" element={<AuthCallbackPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
 

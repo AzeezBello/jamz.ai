@@ -148,6 +148,9 @@ export default function SongPage() {
                 variant="outline"
                 onClick={() => void toggleLike(song.id)}
                 aria-pressed={Boolean(song.is_liked)}
+                // Without this the button's accessible name is just the like
+                // count — a bare number, unlike the same control elsewhere.
+                aria-label={song.is_liked ? `Unlike ${song.title}` : `Like ${song.title}`}
                 className={`border-white/20 hover:bg-white/10 ${song.is_liked ? 'text-[#ff6b6b]' : 'text-white'}`}
               >
                 <Heart
