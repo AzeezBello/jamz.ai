@@ -318,3 +318,25 @@ function encodeWav(samples: Float32Array, gain: number, sampleRate: number): Uin
   }
   return new Uint8Array(buffer);
 }
+
+/** Transcode a WAV Uint8Array to MP3 using ffmpeg (if available). */
+export async function transcodeWavToMp3(wav: Uint8Array): Promise<Uint8Array> {
+  const process = Deno.run({
+    cmd: ["ffmpeg", "-y", "-f", "wav", "-i", "pipe:0", "-f", "mp3", "pipe:1"],
+    stdin: "piped",
+    stdout: "piped",
+    stderr: "null",
+  });
+  await process.stdin.write(wav);
+  process.stdin.close();
+  const mp3 = await process.output();
+  process.close();
+  return mp3;
+}
+
+/** Helper to get MP3 representation of a synthesis result. */
+export async function synthesizeWithMp3(options: SynthOptions): Promise<{wav: Uint8Array; mp3: Uint8Array; durationSeconds: number; bpm: number; key: string; sampleRate: number;}> {
+  const result = synthesize(options);
+  const mp3 = await transcodeWavToMp3(result.wav);
+  return { ...result, mp3 };
+}

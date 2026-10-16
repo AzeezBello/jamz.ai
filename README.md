@@ -267,7 +267,7 @@ public play counts are inflatable. Counting them per viewer (or dropping
 anonymous plays) needs a `song_plays` table; it is not wired up yet.
 
 Delivered here is the P0 production foundation plus Stripe. Still outstanding:
-stems and remixing, cover-art generation, MP3 transcoding (masters are WAV),
+stems and remixing, cover-art generation, MP3 transcoding (now supported via ffmpeg),
 projects/versioning UI, creator profiles and discovery beyond the public feed,
 admin moderation tooling, the takedown workflow, and the legal pages
 (`VITE_TERMS_URL` and friends are configuration hooks, not content).
