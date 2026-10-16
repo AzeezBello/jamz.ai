@@ -418,6 +418,26 @@ export async function moveSongsToProject(
   return Number(data ?? 0);
 }
 
+function toBase64(bytes: Uint8Array): string {
+  let binary = '';
+  const chunkSize = 8192;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+  return btoa(binary);
+}
+
+export async function saveVersion(projectId: string, wav: Uint8Array, mp3?: Uint8Array): Promise<void> {
+  const payload = {
+    project_id: projectId,
+    wav: toBase64(wav),
+    ...(mp3 && { mp3: toBase64(mp3) }),
+  };
+  await callFunction<void>('versions/create', payload);
+}
+
+
 // ---------------------------------------------------------------------------
 // Reference uploads
 // ---------------------------------------------------------------------------
