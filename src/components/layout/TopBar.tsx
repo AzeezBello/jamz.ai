@@ -12,7 +12,10 @@ function usePageTitle(): string {
   if (pathname === '/settings') return 'Settings';
   if (pathname === '/billing') return 'Billing';
   if (pathname === '/dashboard') {
-    return params.get('tab') === 'discover' ? 'Discover' : 'My Library';
+    const tab = params.get('tab');
+    if (tab === 'discover') return 'Discover';
+    if (tab === 'favourites') return 'Favourites';
+    return 'Studio & Library';
   }
   return 'Jamz';
 }

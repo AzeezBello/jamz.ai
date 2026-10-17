@@ -56,17 +56,29 @@ export default function DashboardPage() {
     projectId,
   } = useLibraryStore();
 
-  const [tab, setTab] = useState<'library' | 'discover' | 'favourites'>('library');
   const [view, setView] = useState<'list' | 'grid'>('list');
   const [pendingDelete, setPendingDelete] = useState<Song | null>(null);
   const [editing, setEditing] = useState<Song | null>(null);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const openTour = useOnboardingStore((state) => state.openTour);
 
-  useEffect(() => {
-    const requested = searchParams.get('tab');
-    if (requested === 'discover' || requested === 'favourites') setTab(requested);
-  }, [searchParams]);
+  const requestedTab = searchParams.get('tab');
+  const tab: 'library' | 'discover' | 'favourites' =
+    requestedTab === 'discover'
+      ? 'discover'
+      : requestedTab === 'favourites'
+        ? 'favourites'
+        : 'library';
+
+  const handleTabChange = (nextTab: 'library' | 'discover' | 'favourites') => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (nextTab === 'library') {
+      nextParams.delete('tab');
+    } else {
+      nextParams.set('tab', nextTab);
+    }
+    setSearchParams(nextParams, { replace: true });
+  };
 
   useEffect(() => {
     void loadStats();
@@ -130,7 +142,7 @@ export default function DashboardPage() {
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
             <Tabs
               value={tab}
-              onValueChange={(value) => setTab(value as 'library' | 'discover' | 'favourites')}
+              onValueChange={(value) => handleTabChange(value as 'library' | 'discover' | 'favourites')}
             >
               <TabsList className="bg-white/5">
                 <TabsTrigger
@@ -171,7 +183,7 @@ export default function DashboardPage() {
 
           {owned && <BulkActionBar songs={mySongs} />}
 
-          <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+          <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden transition-all duration-200">
             {loading && !songs.length ? (
               <div className="p-4 space-y-2">
                 {Array.from({ length: 5 }).map((_, index) => (
@@ -179,18 +191,20 @@ export default function DashboardPage() {
                 ))}
               </div>
             ) : view === 'grid' && songs.length ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4 animate-in fade-in-50 duration-200">
                 {songs.map((song) => (
                   <SongCard key={song.id} song={song} queue={songs} />
                 ))}
               </div>
             ) : songs.length ? (
-              <SongTable
-                songs={songs}
-                owned={owned}
-                onEdit={setEditing}
-                onDelete={setPendingDelete}
-              />
+              <div className="animate-in fade-in-50 duration-200">
+                <SongTable
+                  songs={songs}
+                  owned={owned}
+                  onEdit={setEditing}
+                  onDelete={setPendingDelete}
+                />
+              </div>
             ) : null}
 
             {!loading && !songs.length && (

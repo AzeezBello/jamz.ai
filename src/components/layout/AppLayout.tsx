@@ -52,7 +52,7 @@ export default function AppLayout() {
           id="main"
           className={`${
             showAppChrome ? (collapsed ? 'md:pl-[72px]' : 'md:pl-64') : ''
-          } ${showAppChrome ? 'pt-14 md:pt-0' : ''} transition-[padding] duration-200 ${
+          } ${showAppChrome ? 'pt-14 md:pt-0' : ''} transition-[padding] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] ${
             hasPlayer ? 'pb-24' : ''
           }`}
         >
@@ -60,7 +60,7 @@ export default function AppLayout() {
           {showAppChrome && <Breadcrumbs />}
           <Outlet />
         </main>
-        <Footer />
+        {!showAppChrome && <Footer />}
         <AudioPlayer />
         <GenerationModal />
         <Suspense fallback={null}>

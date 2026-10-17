@@ -1,88 +1,98 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
+import { useProjectStore } from '@/store/projectStore';
+import { useLibraryStore } from '@/store/libraryStore';
 
 /**
- * Global breadcrumb component that builds a navigation trail from the current URL.
- * Includes schema.org BreadcrumbList microdata for search engines and accessibility.
- * Hidden on the root route ('/').
+ * Global breadcrumb component built on shadcn's Breadcrumb primitive.
+ * Dynamically builds a navigation trail from the current URL and dashboard state
+ * (Studio tabs, active projects).
+ * Hidden on the root marketing route ('/').
  */
 export default function Breadcrumbs() {
   const { pathname } = useLocation();
+  const [params] = useSearchParams();
   const segments = pathname.split('/').filter(Boolean);
+  const projectId = useLibraryStore((state) => state.projectId);
+  const projects = useProjectStore((state) => state.projects);
 
   if (segments.length === 0) {
     return null;
   }
 
-  const crumbs = segments.map((segment, index) => {
+  const crumbs: Array<{ to: string; label: string }> = segments.map((segment, index) => {
     const to = '/' + segments.slice(0, index + 1).join('/');
-    const label = segment
+    let label = segment
       .replace(/-/g, ' ')
       .replace(/_/g, ' ')
       .replace(/\b\w/g, (c) => c.toUpperCase());
+    if (segment === 'dashboard') {
+      label = 'Studio';
+    }
     return { to, label };
   });
 
+  if (pathname === '/dashboard') {
+    const tab = params.get('tab');
+    if (tab === 'discover') {
+      crumbs.push({ to: '/dashboard?tab=discover', label: 'Discover' });
+    } else if (tab === 'favourites') {
+      crumbs.push({ to: '/dashboard?tab=favourites', label: 'Favourites' });
+    } else if (projectId) {
+      const project = projects.find((p) => p.id === projectId);
+      if (project) {
+        crumbs.push({ to: '/dashboard', label: project.title });
+      }
+    }
+  }
+
   return (
-    <nav
-      aria-label="Breadcrumb"
-      className="px-4 md:px-8 py-2 text-sm text-white/50"
-    >
-      <ol
-        className="flex items-center flex-wrap gap-1.5"
-        itemScope
-        itemType="https://schema.org/BreadcrumbList"
-      >
-        <li
-          itemProp="itemListElement"
-          itemScope
-          itemType="https://schema.org/ListItem"
-          className="flex items-center"
-        >
-          <Link
-            to="/"
-            itemProp="item"
-            className="text-white/60 hover:text-white transition-colors"
-          >
-            <span itemProp="name">Home</span>
-          </Link>
-          <meta itemProp="position" content="1" />
-        </li>
-        {crumbs.map((c, i) => {
-          const isLast = i === crumbs.length - 1;
-          const position = i + 2;
-          return (
-            <li
-              key={c.to}
-              itemProp="itemListElement"
-              itemScope
-              itemType="https://schema.org/ListItem"
-              className="flex items-center gap-1.5"
-            >
-              <span className="text-white/30" aria-hidden="true">
-                /
+    <div className="max-w-[1400px] mx-auto px-6 pt-3 pb-1">
+      <Breadcrumb aria-label="Breadcrumb">
+        <BreadcrumbList className="text-white/50 gap-1.5 sm:gap-2">
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link
+                to="/"
+                className="text-white/60 hover:text-white transition-colors duration-150"
+              >
+                Home
+              </Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          {crumbs.map((c, i) => {
+            const isLast = i === crumbs.length - 1;
+            return (
+              <span key={c.to + c.label} className="inline-flex items-center gap-1.5 sm:gap-2">
+                <BreadcrumbSeparator className="text-white/30" />
+                <BreadcrumbItem>
+                  {isLast ? (
+                    <BreadcrumbPage className="text-white font-medium truncate max-w-[200px] sm:max-w-none">
+                      {c.label}
+                    </BreadcrumbPage>
+                  ) : (
+                    <BreadcrumbLink asChild>
+                      <Link
+                        to={c.to}
+                        className="text-white/60 hover:text-white transition-colors duration-150"
+                      >
+                        {c.label}
+                      </Link>
+                    </BreadcrumbLink>
+                  )}
+                </BreadcrumbItem>
               </span>
-              {isLast ? (
-                <span
-                  itemProp="name"
-                  aria-current="page"
-                  className="text-white font-medium truncate max-w-[200px] sm:max-w-none"
-                >
-                  {c.label}
-                </span>
-              ) : (
-                <Link
-                  to={c.to}
-                  itemProp="item"
-                  className="text-white/60 hover:text-white transition-colors"
-                >
-                  <span itemProp="name">{c.label}</span>
-                </Link>
-              )}
-              <meta itemProp="position" content={String(position)} />
-            </li>
-          );
-        })}
-      </ol>
-    </nav>
+            );
+          })}
+        </BreadcrumbList>
+      </Breadcrumb>
+    </div>
   );
 }

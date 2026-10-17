@@ -110,16 +110,20 @@
     box-shadow: 0 0 50px rgba(255, 107, 107, 0.6);
   }
 
-  /* Card hover lift */
+  /* Card hover lift - refined subtle elevation */
   .card-lift {
     transition:
-      transform 0.3s var(--ease-out-expo),
-      box-shadow 0.3s var(--ease-out-expo);
+      transform 0.2s var(--ease-out-expo),
+      box-shadow 0.2s var(--ease-out-expo);
   }
 
   .card-lift:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  .card-lift:active {
+    transform: translateY(0) scale(0.99);
   }
 
   /* Animation utilities */

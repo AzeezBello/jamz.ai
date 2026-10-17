@@ -3,8 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import UserMenu from '@/components/UserMenu';
 import NotificationBell from '@/components/NotificationBell';
 import {
+  Heart,
   LayoutDashboard,
-  Library,
   CreditCard,
   PanelLeftClose,
   PanelLeftOpen,
@@ -44,19 +44,26 @@ export default function Navigation() {
     // NavLink matches on pathname alone, so both lit up at once — active state
     // is worked out here instead.
     const discovering = pathname === '/dashboard' && search.includes('tab=discover');
+    const favouriting = pathname === '/dashboard' && search.includes('tab=favourites');
+    const libraryActive = pathname === '/dashboard' && !discovering && !favouriting;
     const links = [
-      { label: 'Create', to: '/', icon: Sparkles, active: pathname === '/' },
       {
-        label: 'Library',
+        label: 'Studio',
         to: '/dashboard',
-        icon: Library,
-        active: pathname === '/dashboard' && !discovering,
+        icon: Sparkles,
+        active: libraryActive,
       },
       {
         label: 'Discover',
         to: '/dashboard?tab=discover',
         icon: LayoutDashboard,
         active: discovering,
+      },
+      {
+        label: 'Favourites',
+        to: '/dashboard?tab=favourites',
+        icon: Heart,
+        active: favouriting,
       },
       { label: 'Billing', to: '/billing', icon: CreditCard, active: pathname === '/billing' },
       { label: 'Settings', to: '/settings', icon: Settings, active: pathname === '/settings' },
@@ -65,18 +72,20 @@ export default function Navigation() {
     return (
       <>
         <aside
-          className={`hidden md:flex fixed inset-y-0 left-0 z-50 flex-col border-r border-white/10 bg-[#080808] py-6 transition-[width] duration-200 ${
+          className={`hidden md:flex fixed inset-y-0 left-0 z-50 flex-col border-r border-white/10 bg-[#080808] py-6 transition-[width] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] ${
             collapsed ? 'w-[72px] px-3' : 'w-64 px-5'
           }`}
         >
           <div
-            className={`flex items-center mb-10 ${collapsed ? 'justify-center' : 'justify-between'}`}
+            className={`flex items-center mb-10 ${collapsed ? 'flex-col gap-4' : 'justify-between'}`}
           >
-            {!collapsed && (
-              <Link to="/" className="text-2xl font-bold tracking-tight text-white">
-                JAMZ
-              </Link>
-            )}
+            <Link
+              to="/"
+              className="text-2xl font-bold tracking-tight text-white hover:text-[#ff6b6b] transition-colors"
+              aria-label="Jamz home"
+            >
+              {collapsed ? 'J' : 'JAMZ'}
+            </Link>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
@@ -109,11 +118,11 @@ export default function Navigation() {
                   // collapsed the aria-label carries it instead, so the link is
                   // never announced as bare icon.
                   aria-label={collapsed ? label : undefined}
-                  className={`flex items-center gap-3 rounded-lg py-2.5 text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-3 rounded-lg py-2.5 text-sm font-medium transition-all duration-150 ease-out active:scale-[0.98] ${
                     collapsed ? 'justify-center px-0' : 'px-3'
                   } ${
                     active
-                      ? 'bg-[#ff6b6b] text-black'
+                      ? 'bg-[#ff6b6b] text-black shadow-xs'
                       : 'text-white/60 hover:bg-white/10 hover:text-white'
                   }`}
                 >

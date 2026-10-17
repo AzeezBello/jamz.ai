@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { CreditCard, Library, LogOut, Settings, Sparkles } from 'lucide-react';
+import { CreditCard, Library, LogOut, Settings, Sparkles, User } from 'lucide-react';
 import AuthModal from './modals/AuthModal';
 import { useAuthStore } from '@/store/authStore';
 
@@ -103,6 +103,14 @@ export default function UserMenu({ compact = false }: { compact?: boolean } = {}
             <Library className="w-4 h-4 mr-2" aria-hidden="true" /> My Library
           </Link>
         </DropdownMenuItem>
+
+        {profile?.handle && (
+          <DropdownMenuItem asChild className="cursor-pointer">
+            <Link to={`/u/${profile.handle}`}>
+              <User className="w-4 h-4 mr-2" aria-hidden="true" /> Public Profile
+            </Link>
+          </DropdownMenuItem>
+        )}
 
         <DropdownMenuItem asChild className="cursor-pointer">
           <Link to="/billing">

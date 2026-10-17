@@ -8,10 +8,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { FolderPlus, Library, MoreHorizontal, Pencil, Search, Trash2 } from 'lucide-react';
 import { useProjectStore } from '@/store/projectStore';
 import { useLibraryStore } from '@/store/libraryStore';
 import { formatRelative } from '@/lib/format';
+import type { Project } from '@/lib/types';
 
 /** Deterministic cover tint per project, so each is recognisable at a glance. */
 function tint(id: string): string {
@@ -33,6 +44,7 @@ export default function WorkspacePanel() {
   const [draft, setDraft] = useState('');
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
 
   const visible = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -197,17 +209,7 @@ export default function WorkspacePanel() {
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="cursor-pointer text-[#ff6b6b] focus:text-[#ff6b6b]"
-                    onClick={() => {
-                      if (
-                        window.confirm(
-                          `Delete “${project.title}”? Its ${project.song_count} song(s) stay in your library.`,
-                        )
-                      ) {
-                        void remove(project.id)
-                          .then(() => toast.success('Project deleted. Songs kept.'))
-                          .catch((err) => toast.error(err.message));
-                      }
-                    }}
+                    onClick={() => setProjectToDelete(project)}
                   >
                     <Trash2 className="w-4 h-4 mr-2" aria-hidden="true" /> Delete
                   </DropdownMenuItem>
@@ -223,6 +225,41 @@ export default function WorkspacePanel() {
           </p>
         )}
       </nav>
+
+      <AlertDialog
+        open={Boolean(projectToDelete)}
+        onOpenChange={(open) => !open && setProjectToDelete(null)}
+      >
+        <AlertDialogContent className="bg-[#0a0a0a] border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete “{projectToDelete?.title}”?</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/50">
+              Its {projectToDelete?.song_count ?? 0} song(s) will stay safely in your library, unfiled.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">
+              Keep it
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (!projectToDelete) return;
+                try {
+                  await remove(projectToDelete.id);
+                  toast.success('Project deleted. Songs kept.');
+                } catch (err) {
+                  toast.error(err instanceof Error ? err.message : 'Could not delete that project.');
+                } finally {
+                  setProjectToDelete(null);
+                }
+              }}
+              className="bg-[#ff6b6b] text-black hover:bg-[#ff8e8e]"
+            >
+              Delete Project
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
