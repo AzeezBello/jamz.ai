@@ -11,7 +11,10 @@ import {
   Loader2,
   Pause,
   Play,
+  Repeat,
+  Repeat1,
   Share2,
+  Shuffle,
   SkipBack,
   SkipForward,
   Volume2,
@@ -38,6 +41,8 @@ export default function AudioPlayer() {
     duration,
     volume,
     muted,
+    shuffle,
+    repeat,
     error,
     toggle,
     next,
@@ -45,6 +50,8 @@ export default function AudioPlayer() {
     seek,
     setVolume,
     setMuted,
+    toggleShuffle,
+    cycleRepeat,
     play,
     stop,
   } = usePlayerStore();
@@ -121,7 +128,20 @@ export default function AudioPlayer() {
               )}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleShuffle}
+                aria-label={shuffle ? 'Disable shuffle' : 'Enable shuffle'}
+                aria-pressed={shuffle}
+                className={`h-8 w-8 hidden sm:inline-flex ${
+                  shuffle ? 'text-[#ff6b6b] bg-white/10' : 'text-white/50 hover:text-white'
+                }`}
+              >
+                <Shuffle className="w-4 h-4" aria-hidden="true" />
+              </Button>
+
               <Button
                 variant="ghost"
                 size="icon"
@@ -156,6 +176,23 @@ export default function AudioPlayer() {
                 className="text-white/70 hover:text-white hover:bg-white/10"
               >
                 <SkipForward className="w-5 h-5" aria-hidden="true" />
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={cycleRepeat}
+                aria-label={`Repeat mode: ${repeat}`}
+                aria-pressed={repeat !== 'off'}
+                className={`h-8 w-8 hidden sm:inline-flex ${
+                  repeat !== 'off' ? 'text-[#ff6b6b] bg-white/10' : 'text-white/50 hover:text-white'
+                }`}
+              >
+                {repeat === 'one' ? (
+                  <Repeat1 className="w-4 h-4" aria-hidden="true" />
+                ) : (
+                  <Repeat className="w-4 h-4" aria-hidden="true" />
+                )}
               </Button>
             </div>
 

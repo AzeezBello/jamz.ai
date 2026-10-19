@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Joyride, type EventData, STATUS, type Step } from 'react-joyride';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { TOUR_STEPS } from '@/lib/tour-steps';
@@ -14,21 +13,12 @@ const joyrideSteps: Step[] = TOUR_STEPS.map((s) => ({
 export default function OnboardingTour() {
   const active = useOnboardingStore((s) => s.active);
   const finishTour = useOnboardingStore((s) => s.finishTour);
-  const [localRun, setLocalRun] = useState(false);
 
-  const isRunning = active === 'tour' || localRun;
-
-  useEffect(() => {
-    const done = localStorage.getItem('jamz-onboarding-done');
-    if (!done && active === 'tour') {
-      setLocalRun(true);
-    }
-  }, [active]);
+  const isRunning = active === 'tour';
 
   const handleEvent = (data: EventData) => {
     const { status } = data;
     if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
-      setLocalRun(false);
       localStorage.setItem('jamz-onboarding-done', 'true');
       void finishTour();
     }

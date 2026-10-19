@@ -4,15 +4,20 @@ import { getAudioElement } from '@/lib/audio-engine';
 import { getAudioUrl, recordPlay } from '@/lib/api';
 import type { Song } from '@/lib/types';
 
+export type RepeatMode = 'off' | 'all' | 'one';
+
 interface PlayerState {
   currentSong: Song | null;
   queue: Song[];
+  recentSongs: Song[];
   isPlaying: boolean;
   isLoading: boolean;
   currentTime: number;
   duration: number;
   volume: number;
   muted: boolean;
+  shuffle: boolean;
+  repeat: RepeatMode;
   error: string | null;
 
   play: (song: Song, queue?: Song[]) => Promise<void>;
@@ -24,6 +29,8 @@ interface PlayerState {
   seek: (seconds: number) => void;
   setVolume: (volume: number) => void;
   setMuted: (muted: boolean) => void;
+  toggleShuffle: () => void;
+  cycleRepeat: () => void;
   stop: () => void;
   /** Keep a playing song's metadata in sync when the library refreshes. */
   syncSong: (song: Song) => void;
@@ -50,7 +57,19 @@ export const usePlayerStore = create<PlayerState>()(
         el.addEventListener('waiting', () => set({ isLoading: true }));
         el.addEventListener('playing', () => set({ isLoading: false, error: null }));
         el.addEventListener('ended', () => {
-          // Playback stops at the end of the track instead of running forever.
+          const { repeat, currentSong, queue } = get();
+          if (repeat === 'one' && currentSong) {
+            el.currentTime = 0;
+            void el.play();
+            return;
+          }
+          if (repeat === 'off' && queue.length > 0 && currentSong) {
+            const index = queue.findIndex((s) => s.id === currentSong.id);
+            if (index === queue.length - 1 && !get().shuffle) {
+              set({ isPlaying: false, currentTime: el.duration || 0 });
+              return;
+            }
+          }
           set({ isPlaying: false, currentTime: el.duration || 0 });
           get().next();
         });
@@ -62,12 +81,15 @@ export const usePlayerStore = create<PlayerState>()(
       return {
         currentSong: null,
         queue: [],
+        recentSongs: [],
         isPlaying: false,
         isLoading: false,
         currentTime: 0,
         duration: 0,
         volume: 0.8,
         muted: false,
+        shuffle: false,
+        repeat: 'all',
         error: null,
 
         play: async (song, queue) => {
@@ -75,9 +97,15 @@ export const usePlayerStore = create<PlayerState>()(
           const el = getAudioElement();
           const token = ++loadToken;
 
+          const nextRecent = [
+            song,
+            ...get().recentSongs.filter((item) => item.id !== song.id),
+          ].slice(0, 12);
+
           set({
             currentSong: song,
             queue: queue ?? (get().queue.some((s) => s.id === song.id) ? get().queue : [song]),
+            recentSongs: nextRecent,
             isLoading: true,
             error: null,
             currentTime: 0,
@@ -118,8 +146,14 @@ export const usePlayerStore = create<PlayerState>()(
         },
 
         next: () => {
-          const { queue, currentSong } = get();
+          const { queue, currentSong, shuffle } = get();
           if (!currentSong || queue.length < 2) return;
+          if (shuffle) {
+            const others = queue.filter((s) => s.id !== currentSong.id);
+            const randomSong = others[Math.floor(Math.random() * others.length)];
+            if (randomSong) void get().play(randomSong, queue);
+            return;
+          }
           const index = queue.findIndex((s) => s.id === currentSong.id);
           const nextSong = queue[(index + 1) % queue.length];
           if (nextSong) void get().play(nextSong, queue);
@@ -167,6 +201,14 @@ export const usePlayerStore = create<PlayerState>()(
           set({ muted });
         },
 
+        toggleShuffle: () => set({ shuffle: !get().shuffle }),
+
+        cycleRepeat: () => {
+          const order: RepeatMode[] = ['off', 'all', 'one'];
+          const nextIndex = (order.indexOf(get().repeat) + 1) % order.length;
+          set({ repeat: order[nextIndex] });
+        },
+
         stop: () => {
           const el = getAudioElement();
           el.pause();
@@ -186,14 +228,23 @@ export const usePlayerStore = create<PlayerState>()(
 
         syncSong: (song) => {
           if (get().currentSong?.id === song.id) set({ currentSong: song });
-          set({ queue: get().queue.map((s) => (s.id === song.id ? song : s)) });
+          set({
+            queue: get().queue.map((s) => (s.id === song.id ? song : s)),
+            recentSongs: get().recentSongs.map((s) => (s.id === song.id ? song : s)),
+          });
         },
       };
     },
     {
       name: 'jamz-player-preferences',
-      // Only device preferences persist. No song, user, or session data.
-      partialize: (state) => ({ volume: state.volume, muted: state.muted }),
+      // Only device preferences and recent playback list persist.
+      partialize: (state) => ({
+        volume: state.volume,
+        muted: state.muted,
+        shuffle: state.shuffle,
+        repeat: state.repeat,
+        recentSongs: state.recentSongs,
+      }),
     },
   ),
 );

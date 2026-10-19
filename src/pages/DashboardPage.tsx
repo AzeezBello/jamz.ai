@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,8 @@ import SongTable from '@/components/dashboard/SongTable';
 import SongCard from '@/components/SongCard';
 import WorkspacePanel from '@/components/dashboard/WorkspacePanel';
 import EditSongDialog from '@/components/dashboard/EditSongDialog';
+import HomeHub from '@/components/dashboard/HomeHub';
+import ExploreFeed from '@/components/dashboard/ExploreFeed';
 import { useLibraryStore } from '@/store/libraryStore';
 import { formatCount } from '@/lib/format';
 import { GENERATION_COST } from '@/lib/credits';
@@ -57,20 +59,23 @@ export default function DashboardPage() {
   } = useLibraryStore();
 
   const [view, setView] = useState<'list' | 'grid'>('list');
+  const [audioType, setAudioType] = useState<'all' | 'vocals' | 'instrumental'>('all');
   const [pendingDelete, setPendingDelete] = useState<Song | null>(null);
   const [editing, setEditing] = useState<Song | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const openTour = useOnboardingStore((state) => state.openTour);
 
   const requestedTab = searchParams.get('tab');
-  const tab: 'library' | 'discover' | 'favourites' =
-    requestedTab === 'discover'
-      ? 'discover'
-      : requestedTab === 'favourites'
-        ? 'favourites'
-        : 'library';
+  const tab: 'home' | 'library' | 'discover' | 'favourites' =
+    requestedTab === 'home'
+      ? 'home'
+      : requestedTab === 'discover'
+        ? 'discover'
+        : requestedTab === 'favourites'
+          ? 'favourites'
+          : 'library';
 
-  const handleTabChange = (nextTab: 'library' | 'discover' | 'favourites') => {
+  const handleTabChange = (nextTab: 'home' | 'library' | 'discover' | 'favourites') => {
     const nextParams = new URLSearchParams(searchParams);
     if (nextTab === 'library') {
       nextParams.delete('tab');
@@ -84,13 +89,18 @@ export default function DashboardPage() {
     void loadStats();
   }, [loadStats]);
 
-  // One debounced effect drives both tabs: search, sort and filter all feed the
-  // same server-side query, so the list is never filtered client-side.
+  // One debounced effect drives all tabs: search, sort and filter all feed the
+  // same server-side query.
   useEffect(() => {
     const timer = setTimeout(() => {
       if (tab === 'library') void loadMySongs();
       else if (tab === 'favourites') void loadLikedSongs();
-      else void loadPublicSongs();
+      else if (tab === 'home') {
+        void loadPublicSongs();
+        void loadMySongs();
+      } else {
+        void loadPublicSongs();
+      }
     }, 250);
     return () => clearTimeout(timer);
   }, [search, sort, visibility, projectId, tab, loadMySongs, loadPublicSongs, loadLikedSongs]);
@@ -99,7 +109,14 @@ export default function DashboardPage() {
     clearSelection();
   }, [tab, clearSelection]);
 
-  const songs = tab === 'library' ? mySongs : tab === 'favourites' ? likedSongs : publicSongs;
+  const rawSongs =
+    tab === 'library' ? mySongs : tab === 'favourites' ? likedSongs : publicSongs;
+  const songs = useMemo(() => {
+    if (audioType === 'vocals') return rawSongs.filter((s) => !s.is_instrumental);
+    if (audioType === 'instrumental') return rawSongs.filter((s) => s.is_instrumental);
+    return rawSongs;
+  }, [rawSongs, audioType]);
+
   const loading = tab === 'library' ? loadingMine : tab === 'favourites' ? false : loadingPublic;
   const hasMore = tab === 'library' ? hasMoreMine : tab === 'favourites' ? false : hasMorePublic;
   const owned = tab === 'library';
@@ -118,33 +135,45 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-[1400px] mx-auto px-6 pt-8 pb-32">
-      {/* Composer and projects side by side, as in the reference: the brief on
-          the left, where it gets filed on the right. */}
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)] mb-8">
-        <CreateStudio />
-        <div className="min-w-0">
-          <h2 className="text-sm font-medium text-white/50 mb-3">Projects</h2>
-          <WorkspacePanel />
-        </div>
-      </div>
+      {tab !== 'home' && (
+        <>
+          {/* Composer and projects side by side, as in the reference: the brief on
+              the left, where it gets filed on the right. */}
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)] mb-8">
+            <CreateStudio />
+            <div className="min-w-0">
+              <h2 className="text-sm font-medium text-white/50 mb-3">Projects</h2>
+              <WorkspacePanel />
+            </div>
+          </div>
 
-      <GenerationActivity />
+          <GenerationActivity />
 
-      <div data-tour="library-stats" className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <StatCard icon={Music} label="Total songs" value={String(stats?.song_count ?? 0)} />
-        <StatCard icon={Play} label="Total plays" value={formatCount(stats?.play_total ?? 0)} />
-        <StatCard icon={Heart} label="Total likes" value={formatCount(stats?.like_total ?? 0)} />
-        <StatCard icon={Globe} label="Public" value={String(stats?.public_count ?? 0)} />
-      </div>
+          <div data-tour="library-stats" className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <StatCard icon={Music} label="Total songs" value={String(stats?.song_count ?? 0)} />
+            <StatCard icon={Play} label="Total plays" value={formatCount(stats?.play_total ?? 0)} />
+            <StatCard icon={Heart} label="Total likes" value={formatCount(stats?.like_total ?? 0)} />
+            <StatCard icon={Globe} label="Public" value={String(stats?.public_count ?? 0)} />
+          </div>
+        </>
+      )}
 
       <div>
         <div className="min-w-0">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
             <Tabs
               value={tab}
-              onValueChange={(value) => handleTabChange(value as 'library' | 'discover' | 'favourites')}
+              onValueChange={(value) =>
+                handleTabChange(value as 'home' | 'library' | 'discover' | 'favourites')
+              }
             >
               <TabsList className="bg-white/5">
+                <TabsTrigger
+                  value="home"
+                  className="data-[state=active]:bg-[#ff6b6b] data-[state=active]:text-black"
+                >
+                  Home
+                </TabsTrigger>
                 <TabsTrigger
                   value="library"
                   className="data-[state=active]:bg-[#ff6b6b] data-[state=active]:text-black"
@@ -167,50 +196,65 @@ export default function DashboardPage() {
             </Tabs>
           </div>
 
-          <div data-tour="library-toolbar">
-            <LibraryToolbar
-              search={search}
-              onSearch={(value) => setQuery({ search: value })}
-              sort={sort}
-              onSort={(value) => setQuery({ sort: value })}
-              visibility={visibility}
-              onVisibility={(value) => setQuery({ visibility: value })}
-              view={view}
-              onView={setView}
-              showVisibilityFilter={owned}
-            />
-          </div>
+          {tab === 'home' ? (
+            <HomeHub onNavigateTab={handleTabChange} />
+          ) : (
+            <>
+              {tab === 'discover' && (
+                <ExploreFeed
+                  publicSongs={publicSongs}
+                  likedCount={likedSongs.length}
+                  onSelectGenre={(genre) => setQuery({ search: genre })}
+                  onNavigateTab={handleTabChange}
+                />
+              )}
 
-          {owned && <BulkActionBar songs={mySongs} />}
-
-          <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden transition-all duration-200">
-            {loading && !songs.length ? (
-              <div className="p-4 space-y-2">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <Skeleton key={index} className="h-12 w-full bg-white/5" />
-                ))}
-              </div>
-            ) : view === 'grid' && songs.length ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4 animate-in fade-in-50 duration-200">
-                {songs.map((song) => (
-                  <SongCard key={song.id} song={song} queue={songs} />
-                ))}
-              </div>
-            ) : songs.length ? (
-              <div className="animate-in fade-in-50 duration-200">
-                <SongTable
-                  songs={songs}
-                  owned={owned}
-                  onEdit={setEditing}
-                  onDelete={setPendingDelete}
+              <div data-tour="library-toolbar">
+                <LibraryToolbar
+                  search={search}
+                  onSearch={(value) => setQuery({ search: value })}
+                  sort={sort}
+                  onSort={(value) => setQuery({ sort: value })}
+                  visibility={visibility}
+                  onVisibility={(value) => setQuery({ visibility: value })}
+                  view={view}
+                  onView={setView}
+                  showVisibilityFilter={owned}
+                  audioType={audioType}
+                  onAudioType={setAudioType}
                 />
               </div>
-            ) : null}
+
+              {owned && <BulkActionBar songs={mySongs} />}
+
+              <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden transition-all duration-200">
+                {loading && !songs.length ? (
+                  <div className="p-4 space-y-2">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <Skeleton key={index} className="h-12 w-full bg-white/5" />
+                    ))}
+                  </div>
+                ) : view === 'grid' && songs.length ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4 animate-in fade-in-50 duration-200">
+                    {songs.map((song) => (
+                      <SongCard key={song.id} song={song} queue={songs} />
+                    ))}
+                  </div>
+                ) : songs.length ? (
+                  <div className="animate-in fade-in-50 duration-200">
+                    <SongTable
+                      songs={songs}
+                      owned={owned}
+                      onEdit={setEditing}
+                      onDelete={setPendingDelete}
+                    />
+                  </div>
+                ) : null}
 
             {!loading && !songs.length && (
               <>
                 {owned ? (
-                  search || visibility !== 'all' || projectId ? (
+                  search || visibility !== 'all' || projectId || audioType !== 'all' ? (
                     <EmptyState
                       icon={Music}
                       title="Nothing matches those filters"
@@ -223,9 +267,10 @@ export default function DashboardPage() {
                       action={
                         <Button
                           variant="outline"
-                          onClick={() =>
-                            setQuery({ search: '', visibility: 'all', projectId: null })
-                          }
+                          onClick={() => {
+                            setQuery({ search: '', visibility: 'all', projectId: null });
+                            setAudioType('all');
+                          }}
                           className="border-white/20 text-white hover:bg-white/10"
                         >
                           Clear filters
@@ -315,7 +360,9 @@ export default function DashboardPage() {
                 <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> Updating…
               </div>
             )}
-          </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

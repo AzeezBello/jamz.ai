@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,38 +18,60 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { FolderPlus, Library, MoreHorizontal, Pencil, Search, Trash2 } from 'lucide-react';
+import {
+  Archive,
+  ArchiveRestore,
+  FolderPlus,
+  MoreHorizontal,
+  Pencil,
+  Search,
+  Trash2,
+} from 'lucide-react';
 import { useProjectStore } from '@/store/projectStore';
 import { useLibraryStore } from '@/store/libraryStore';
+import { useUiStore } from '@/store/uiStore';
 import { formatRelative } from '@/lib/format';
 import type { Project } from '@/lib/types';
 
-/** Deterministic cover tint per project, so each is recognisable at a glance. */
+/** Deterministic vibrant cover gradient per project, inspired by Suno's workspace tiles. */
 function tint(id: string): string {
   let hash = 0;
   for (const character of id) hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
   const hue = hash % 360;
-  return `linear-gradient(135deg, hsl(${hue} 70% 58%), hsl(${(hue + 48) % 360} 72% 46%))`;
+  const hue2 = (hue + 55) % 360;
+  const hue3 = (hue + 140) % 360;
+  return `radial-gradient(circle at 25% 25%, hsl(${hue} 85% 62%), transparent 60%), radial-gradient(circle at 80% 80%, hsl(${hue2} 80% 52%), hsl(${hue3} 65% 32%))`;
 }
 
 export default function WorkspacePanel() {
-  const { projects, rename, remove } = useProjectStore();
+  const { projects, load, rename, remove } = useProjectStore();
   const projectId = useLibraryStore((state) => state.projectId);
   const setQuery = useLibraryStore((state) => state.setQuery);
   const stats = useLibraryStore((state) => state.stats);
   const create = useProjectStore((state) => state.create);
+  const archivedProjects = useUiStore((state) => state.archivedProjects);
+  const toggleArchiveProject = useUiStore((state) => state.toggleArchiveProject);
 
   const [search, setSearch] = useState('');
+  const [showArchived, setShowArchived] = useState(false);
   const [creating, setCreating] = useState(false);
   const [draft, setDraft] = useState('');
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
 
+  useEffect(() => {
+    void load();
+  }, [load]);
+
   const visible = useMemo(() => {
     const term = search.trim().toLowerCase();
-    return term ? projects.filter((item) => item.title.toLowerCase().includes(term)) : projects;
-  }, [projects, search]);
+    return projects.filter((item) => {
+      const isArchived = archivedProjects.includes(item.id);
+      if (showArchived !== isArchived) return false;
+      return term ? item.title.toLowerCase().includes(term) : true;
+    });
+  }, [projects, search, showArchived, archivedProjects]);
 
   const submitNew = async () => {
     if (!draft.trim()) {
@@ -75,19 +97,40 @@ export default function WorkspacePanel() {
 
   return (
     <div data-tour="projects" className="flex flex-col gap-3">
-      <div className="relative">
-        <Search
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40"
-          aria-hidden="true"
-        />
-        <Input
-          type="search"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          aria-label="Search projects"
-          placeholder="Search projects…"
-          className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/30"
-        />
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40"
+            aria-hidden="true"
+          />
+          <Input
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            aria-label="Search projects"
+            placeholder="Search workspaces…"
+            className="pl-9 h-9 rounded-full bg-white/5 border-white/10 text-white placeholder:text-white/30 text-xs"
+          />
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setShowArchived(!showArchived)}
+          aria-pressed={showArchived}
+          className={`h-9 rounded-full border-white/10 text-xs shrink-0 ${
+            showArchived
+              ? 'bg-white/15 text-white border-white/25'
+              : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+          }`}
+        >
+          <Archive className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />
+          Archived
+          {archivedProjects.length > 0 && (
+            <span className="ml-1 text-[10px] text-white/45">({archivedProjects.length})</span>
+          )}
+        </Button>
       </div>
 
       {creating ? (
@@ -111,29 +154,51 @@ export default function WorkspacePanel() {
         <Button
           variant="outline"
           onClick={() => setCreating(true)}
-          className="justify-start border-dashed border-white/15 bg-transparent text-white/60 hover:bg-white/5 hover:text-white"
+          className="justify-start h-12 rounded-xl border-white/10 bg-white/[0.03] text-white/75 hover:bg-white/[0.07] hover:text-white px-3"
         >
-          <FolderPlus className="w-4 h-4 mr-2" aria-hidden="true" /> Create new project
+          <span className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center mr-3 shrink-0">
+            <FolderPlus className="w-4 h-4 text-white/70" aria-hidden="true" />
+          </span>
+          Create new project
         </Button>
       )}
 
-      <nav aria-label="Projects" className="space-y-1">
-        <button
-          type="button"
-          onClick={() => setQuery({ projectId: null })}
-          aria-current={!projectId ? 'true' : undefined}
-          className={`w-full flex items-center gap-3 rounded-lg p-2 text-left transition-colors ${
-            !projectId ? 'bg-white/10' : 'hover:bg-white/5'
-          }`}
-        >
-          <span className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
-            <Library className="w-4 h-4 text-white/60" aria-hidden="true" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm text-white truncate">All songs</span>
-            <span className="block text-xs text-white/40">{stats?.song_count ?? 0} songs</span>
-          </span>
-        </button>
+      <nav
+        aria-label="Projects"
+        className="space-y-1 max-h-[540px] soft-edge-fade-y pr-1"
+      >
+        {!showArchived && (
+          <button
+            type="button"
+            onClick={() => setQuery({ projectId: null })}
+            aria-current={!projectId ? 'true' : undefined}
+            className={`w-full flex items-center gap-3 rounded-xl p-2 text-left transition-colors ${
+              !projectId ? 'bg-white/10 border border-white/10' : 'hover:bg-white/5'
+            }`}
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                backgroundImage:
+                  'radial-gradient(circle at 20% 20%, #f43f5e, transparent 60%), radial-gradient(circle at 80% 80%, #10b981, #7c2d12)',
+              }}
+              className="w-10 h-10 rounded-lg shrink-0 shadow-inner"
+            />
+            <span className="min-w-0 flex-1">
+              <span
+                className={`block text-sm font-medium truncate ${
+                  !projectId ? 'text-[#ff8e8e]' : 'text-white'
+                }`}
+              >
+                My Workspace (All songs)
+              </span>
+              <span className="block text-xs text-white/40">
+                {stats?.song_count ?? 0} {stats?.song_count === 1 ? 'song' : 'songs'} · Active
+                workspace
+              </span>
+            </span>
+          </button>
+        )}
 
         {visible.map((project) =>
           renamingId === project.id ? (
@@ -159,18 +224,20 @@ export default function WorkspacePanel() {
                 type="button"
                 onClick={() => setQuery({ projectId: project.id })}
                 aria-current={projectId === project.id ? 'true' : undefined}
-                className={`w-full flex items-center gap-3 rounded-lg p-2 pr-9 text-left transition-colors ${
-                  projectId === project.id ? 'bg-white/10' : 'hover:bg-white/5'
+                className={`w-full flex items-center gap-3 rounded-xl p-2 pr-9 text-left transition-colors ${
+                  projectId === project.id
+                    ? 'bg-white/10 border border-white/10'
+                    : 'hover:bg-white/5'
                 }`}
               >
                 <span
                   aria-hidden="true"
                   style={{ backgroundImage: tint(project.id) }}
-                  className="w-10 h-10 rounded-lg shrink-0"
+                  className="w-10 h-10 rounded-lg shrink-0 shadow-inner"
                 />
                 <span className="min-w-0 flex-1">
                   <span
-                    className={`block text-sm truncate ${
+                    className={`block text-sm font-medium truncate ${
                       projectId === project.id ? 'text-[#ff8e8e]' : 'text-white'
                     }`}
                   >
@@ -208,6 +275,27 @@ export default function WorkspacePanel() {
                     <Pencil className="w-4 h-4 mr-2" aria-hidden="true" /> Rename
                   </DropdownMenuItem>
                   <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => {
+                      toggleArchiveProject(project.id);
+                      toast.success(
+                        archivedProjects.includes(project.id)
+                          ? `Restored “${project.title}”`
+                          : `Archived “${project.title}”`,
+                      );
+                    }}
+                  >
+                    {archivedProjects.includes(project.id) ? (
+                      <>
+                        <ArchiveRestore className="w-4 h-4 mr-2" aria-hidden="true" /> Unarchive
+                      </>
+                    ) : (
+                      <>
+                        <Archive className="w-4 h-4 mr-2" aria-hidden="true" /> Archive
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
                     className="cursor-pointer text-[#ff6b6b] focus:text-[#ff6b6b]"
                     onClick={() => setProjectToDelete(project)}
                   >
@@ -219,7 +307,11 @@ export default function WorkspacePanel() {
           ),
         )}
 
-        {search && !visible.length && (
+        {showArchived && !visible.length && (
+          <p className="px-2 py-6 text-center text-xs text-white/40">No archived workspaces.</p>
+        )}
+
+        {search && !visible.length && !showArchived && (
           <p className="px-2 py-6 text-center text-sm text-white/40">
             No projects match “{search}”.
           </p>

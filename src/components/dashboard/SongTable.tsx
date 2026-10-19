@@ -22,6 +22,7 @@ import {
   Play,
   Share2,
   Trash2,
+  Wand2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCount, formatDuration, formatRelative } from '@/lib/format';
@@ -30,6 +31,7 @@ import { useLibraryStore } from '@/store/libraryStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useAuthStore } from '@/store/authStore';
 import { useGenerationStore } from '@/store/generationStore';
+import { useUiStore } from '@/store/uiStore';
 import type { Song, SongVisibility } from '@/lib/types';
 
 const VISIBILITY_ICON: Record<SongVisibility, typeof Lock> = {
@@ -56,6 +58,7 @@ export default function SongTable({ songs, owned, onEdit, onDelete }: SongTableP
     rerollCover,
   } = useLibraryStore();
   const createVariation = useGenerationStore((state) => state.createVariation);
+  const setComposerDraft = useUiStore((state) => state.setComposerDraft);
   const play = usePlayerStore((state) => state.play);
   const currentSong = usePlayerStore((state) => state.currentSong);
   const session = useAuthStore((state) => state.session);
@@ -155,16 +158,28 @@ export default function SongTable({ songs, owned, onEdit, onDelete }: SongTableP
                       className="w-10 h-10 rounded object-cover flex-shrink-0"
                     />
                     <div className="min-w-0">
-                      <p
-                        className={`font-medium truncate ${isCurrent ? 'text-[#ff6b6b]' : 'text-white'}`}
-                      >
-                        {song.title}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p
+                          className={`font-medium truncate ${isCurrent ? 'text-[#ff6b6b]' : 'text-white'}`}
+                        >
+                          {song.title}
+                        </p>
+                        {song.model_version && (
+                          <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#ff8e8e] shrink-0">
+                            {song.model_version}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-white/50 text-sm truncate flex items-center gap-1.5">
                         {owned && (
                           <VisibilityIcon className="w-3 h-3" aria-label={song.visibility} />
                         )}
                         {song.artist}
+                        {song.style && (
+                          <span className="text-white/30 text-xs truncate hidden sm:inline">
+                            · {song.style.split(',')[0]}
+                          </span>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -236,6 +251,26 @@ export default function SongTable({ songs, owned, onEdit, onDelete }: SongTableP
                         className="cursor-pointer"
                       >
                         <Download className="w-4 h-4 mr-2" aria-hidden="true" /> Download
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setComposerDraft({
+                            prompt: song.prompt,
+                            style: song.style,
+                            lyrics: song.lyrics ?? '',
+                            title: `${song.title} (Remix)`,
+                            instrumental: song.is_instrumental,
+                            mode: 'advanced',
+                          });
+                          document
+                            .querySelector('[data-tour="studio"]')
+                            ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          toast.success(`Loaded “${song.title}” into Studio for remixing.`);
+                        }}
+                        className="cursor-pointer"
+                      >
+                        <Wand2 className="w-4 h-4 mr-2" aria-hidden="true" /> Remix in Studio
                       </DropdownMenuItem>
 
                       {owned && (

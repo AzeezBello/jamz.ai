@@ -11,9 +11,11 @@ function usePageTitle(): string {
   if (pathname === '/moderation') return 'Moderation';
   if (pathname === '/settings') return 'Settings';
   if (pathname === '/billing') return 'Billing';
+  if (pathname === '/labs') return 'Labs';
   if (pathname === '/dashboard') {
     const tab = params.get('tab');
-    if (tab === 'discover') return 'Discover';
+    if (tab === 'home') return 'Home';
+    if (tab === 'discover') return 'Explore';
     if (tab === 'favourites') return 'Favourites';
     return 'Studio & Library';
   }

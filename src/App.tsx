@@ -16,6 +16,7 @@ const LegalPage = lazy(() => import('@/pages/LegalPage'));
 const ModerationPage = lazy(() => import('@/pages/ModerationPage'));
 const CreatorPage = lazy(() => import('@/pages/CreatorPage'));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
+const LabsPage = lazy(() => import('@/pages/LabsPage'));
 const SongPage = lazy(() => import('@/pages/SongPage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 const BillingPage = lazy(() => import('@/pages/BillingPage'));
@@ -64,6 +65,7 @@ function App() {
 
               <Route element={<RequireAuth />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/labs" element={<LabsPage />} />
                 <Route path="/library" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/billing" element={<BillingPage />} />

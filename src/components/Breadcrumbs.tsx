@@ -41,7 +41,9 @@ export default function Breadcrumbs() {
 
   if (pathname === '/dashboard') {
     const tab = params.get('tab');
-    if (tab === 'discover') {
+    if (tab === 'home') {
+      crumbs.push({ to: '/dashboard?tab=home', label: 'Home' });
+    } else if (tab === 'discover') {
       crumbs.push({ to: '/dashboard?tab=discover', label: 'Discover' });
     } else if (tab === 'favourites') {
       crumbs.push({ to: '/dashboard?tab=favourites', label: 'Favourites' });

@@ -3,13 +3,16 @@ import { Link, useLocation } from 'react-router-dom';
 import UserMenu from '@/components/UserMenu';
 import NotificationBell from '@/components/NotificationBell';
 import {
-  Heart,
-  LayoutDashboard,
   CreditCard,
+  FlaskConical,
+  Heart,
+  Home,
+  LayoutDashboard,
   PanelLeftClose,
   PanelLeftOpen,
   Settings,
   Sparkles,
+  Zap,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -28,6 +31,7 @@ export default function Navigation() {
   const [scrolled, setScrolled] = useState(false);
   const { pathname, search } = useLocation();
   const session = useAuthStore((state) => state.session);
+  const profile = useAuthStore((state) => state.profile);
   const collapsed = useUiStore((state) => state.sidebarCollapsed);
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -40,15 +44,21 @@ export default function Navigation() {
   }, []);
 
   if (session && isAppRoute(pathname)) {
-    // Library and Discover share a path and differ only by query string.
-    // NavLink matches on pathname alone, so both lit up at once — active state
-    // is worked out here instead.
+    // Home, Library, Discover, and Favourites share /dashboard and differ by query string.
+    const homeActive = pathname === '/dashboard' && search.includes('tab=home');
     const discovering = pathname === '/dashboard' && search.includes('tab=discover');
     const favouriting = pathname === '/dashboard' && search.includes('tab=favourites');
-    const libraryActive = pathname === '/dashboard' && !discovering && !favouriting;
+    const libraryActive =
+      pathname === '/dashboard' && !homeActive && !discovering && !favouriting;
     const links = [
       {
-        label: 'Studio',
+        label: 'Home',
+        to: '/dashboard?tab=home',
+        icon: Home,
+        active: homeActive,
+      },
+      {
+        label: 'Library',
         to: '/dashboard',
         icon: Sparkles,
         active: libraryActive,
@@ -65,6 +75,12 @@ export default function Navigation() {
         icon: Heart,
         active: favouriting,
       },
+      {
+        label: 'Labs',
+        to: '/labs',
+        icon: FlaskConical,
+        active: pathname === '/labs',
+      },
       { label: 'Billing', to: '/billing', icon: CreditCard, active: pathname === '/billing' },
       { label: 'Settings', to: '/settings', icon: Settings, active: pathname === '/settings' },
     ];
@@ -77,7 +93,7 @@ export default function Navigation() {
           }`}
         >
           <div
-            className={`flex items-center mb-10 ${collapsed ? 'flex-col gap-4' : 'justify-between'}`}
+            className={`flex items-center mb-8 ${collapsed ? 'flex-col gap-4' : 'justify-between'}`}
           >
             <Link
               to="/"
@@ -114,9 +130,6 @@ export default function Navigation() {
                 <Link
                   to={to}
                   aria-current={active ? 'page' : undefined}
-                  // The label is the accessible name when it is visible; when
-                  // collapsed the aria-label carries it instead, so the link is
-                  // never announced as bare icon.
                   aria-label={collapsed ? label : undefined}
                   className={`flex items-center gap-3 rounded-lg py-2.5 text-sm font-medium transition-all duration-150 ease-out active:scale-[0.98] ${
                     collapsed ? 'justify-center px-0' : 'px-3'
@@ -127,7 +140,21 @@ export default function Navigation() {
                   }`}
                 >
                   <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
-                  {!collapsed && label}
+                  {!collapsed && (
+                    <span className="flex items-center justify-between flex-1">
+                      <span>{label}</span>
+                      {label === 'Labs' && (
+                        <span
+                          aria-hidden="true"
+                          className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                            active ? 'bg-black/20 text-black' : 'bg-white/10 text-white/70'
+                          }`}
+                        >
+                          Beta
+                        </span>
+                      )}
+                    </span>
+                  )}
                 </Link>
               );
 
@@ -144,7 +171,23 @@ export default function Navigation() {
             })}
           </nav>
 
-          <div className="mt-auto">
+          <div className="mt-auto space-y-3">
+            {!collapsed && (!profile?.plan_id || profile.plan_id === 'free') && (
+              <Link
+                to="/billing"
+                aria-label="Upgrade to Jamz Pro plan"
+                className="flex items-center justify-between rounded-xl border border-white/10 bg-gradient-to-r from-[#ff6b6b]/15 via-pink-500/10 to-amber-500/15 px-3.5 py-2.5 text-xs font-semibold text-white hover:border-[#ff6b6b]/40 transition-colors"
+              >
+                <span className="inline-flex items-center gap-2">
+                  <Zap className="w-3.5 h-3.5 text-[#ff6b6b]" aria-hidden="true" />
+                  Upgrade to Pro
+                </span>
+                <span className="rounded bg-white/15 px-1.5 py-0.5 text-[10px] text-white/90">
+                  v5 Max
+                </span>
+              </Link>
+            )}
+
             <div className={`flex items-center gap-1 ${collapsed ? 'flex-col' : ''}`}>
               <NotificationBell />
               <UserMenu compact={collapsed} />
