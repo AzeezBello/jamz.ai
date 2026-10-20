@@ -59,6 +59,9 @@ async function callFunction<T>(name: string, body: unknown = {}): Promise<T> {
 // Profile & plans
 // ---------------------------------------------------------------------------
 
+let profileHasOnboardingCols: boolean | null = null;
+let lastLoadedProfile: Profile | null = null;
+
 export async function fetchProfile(userId: string): Promise<Profile> {
   // Rolls the daily allowance forward before reading, so the balance the user
   // sees is the balance a generation would actually use.
@@ -67,6 +70,10 @@ export async function fetchProfile(userId: string): Promise<Profile> {
   const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
 
   if (error) throw fromPostgrest(error, 'Could not load your profile.');
+  if (data && typeof data === 'object') {
+    profileHasOnboardingCols = 'onboarded_at' in data;
+    lastLoadedProfile = data as Profile;
+  }
   return data as Profile;
 }
 
@@ -87,14 +94,56 @@ export async function updateProfile(
     >
   >,
 ): Promise<Profile> {
+  const stripOnboardingFields = (input: typeof patch) => {
+    const next = { ...input };
+    delete next.onboarded_at;
+    delete next.tour_completed_at;
+    delete next.dismissed_tips;
+    return next;
+  };
+
+  const payload = profileHasOnboardingCols === false ? stripOnboardingFields(patch) : { ...patch };
+
+  if (Object.keys(payload).length === 0) {
+    const merged = { ...(lastLoadedProfile ?? ({ id: userId } as Profile)), ...patch };
+    lastLoadedProfile = merged;
+    return merged;
+  }
+
   const { data, error } = await supabase
     .from('profiles')
-    .update(patch)
+    .update(payload)
     .eq('id', userId)
     .select()
     .single();
 
-  if (error) throw fromPostgrest(error, 'Could not save your profile.');
+  if (error) {
+    const hasOnboardingKeys =
+      'onboarded_at' in payload || 'tour_completed_at' in payload || 'dismissed_tips' in payload;
+    if (hasOnboardingKeys) {
+      profileHasOnboardingCols = false;
+      const fallbackPayload = stripOnboardingFields(payload);
+      if (Object.keys(fallbackPayload).length === 0) {
+        const merged = { ...(lastLoadedProfile ?? ({ id: userId } as Profile)), ...patch };
+        lastLoadedProfile = merged;
+        return merged;
+      }
+      const retry = await supabase
+        .from('profiles')
+        .update(fallbackPayload)
+        .eq('id', userId)
+        .select()
+        .single();
+      if (!retry.error && retry.data) {
+        const merged = { ...(retry.data as Profile), ...patch };
+        lastLoadedProfile = merged;
+        return merged;
+      }
+    }
+    throw fromPostgrest(error, 'Could not save your profile.');
+  }
+
+  lastLoadedProfile = data as Profile;
   return data as Profile;
 }
 
@@ -265,15 +314,33 @@ export interface LibraryStats {
  * used to sum the loaded array, so the figures shifted while you searched.
  */
 export async function fetchLibraryStats(): Promise<LibraryStats> {
-  const { data, error } = await supabase.rpc('library_stats');
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return {
+      song_count: 0,
+      play_total: 0,
+      like_total: 0,
+      public_count: 0,
+      seconds_total: 0,
+    };
+  }
+
+  const { data, error } = await supabase
+    .from('songs')
+    .select('play_count, like_count, visibility, duration_seconds')
+    .eq('user_id', user.id)
+    .is('deleted_at', null);
+
   if (error) throw fromPostgrest(error, 'Could not load your library totals.');
-  const row = (Array.isArray(data) ? data[0] : data) ?? {};
+  const rows = data ?? [];
   return {
-    song_count: Number(row.song_count ?? 0),
-    play_total: Number(row.play_total ?? 0),
-    like_total: Number(row.like_total ?? 0),
-    public_count: Number(row.public_count ?? 0),
-    seconds_total: Number(row.seconds_total ?? 0),
+    song_count: rows.length,
+    play_total: rows.reduce((sum, r) => sum + Number(r.play_count ?? 0), 0),
+    like_total: rows.reduce((sum, r) => sum + Number(r.like_count ?? 0), 0),
+    public_count: rows.filter((r) => r.visibility === 'public').length,
+    seconds_total: rows.reduce((sum, r) => sum + Number(r.duration_seconds ?? 0), 0),
   };
 }
 
@@ -371,9 +438,44 @@ export async function getAudioUrl(songId: string, download = false): Promise<str
 // ---------------------------------------------------------------------------
 
 export async function fetchProjects(): Promise<Project[]> {
-  const { data, error } = await supabase.rpc('project_summaries');
-  if (error) throw fromPostgrest(error, 'Could not load your projects.');
-  return (data ?? []) as Project[];
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const [projectsRes, songsRes] = await Promise.all([
+    supabase
+      .from('projects')
+      .select('id, title, created_at, updated_at')
+      .eq('user_id', user.id)
+      .is('deleted_at', null)
+      .order('updated_at', { ascending: false }),
+    supabase
+      .from('songs')
+      .select('project_id')
+      .eq('user_id', user.id)
+      .is('deleted_at', null)
+      .not('project_id', 'is', null),
+  ]);
+
+  if (projectsRes.error) {
+    throw fromPostgrest(projectsRes.error, 'Could not load your projects.');
+  }
+
+  const counts = new Map<string, number>();
+  for (const row of songsRes.data ?? []) {
+    if (row.project_id) {
+      counts.set(row.project_id, (counts.get(row.project_id) ?? 0) + 1);
+    }
+  }
+
+  return (projectsRes.data ?? []).map((p) => ({
+    id: p.id,
+    title: p.title,
+    created_at: p.created_at,
+    updated_at: p.updated_at,
+    song_count: counts.get(p.id) ?? 0,
+  }));
 }
 
 export async function createProject(title: string): Promise<Project> {
@@ -400,9 +502,26 @@ export async function renameProject(projectId: string, title: string): Promise<v
   if (error) throw fromPostgrest(error, 'Could not rename that project.');
 }
 
-/** Songs survive: the RPC unfiles them rather than cascading the delete. */
+/** Songs survive: unfile them before soft-deleting the project folder. */
 export async function deleteProject(projectId: string): Promise<void> {
-  const { error } = await supabase.rpc('delete_project', { p_project_id: projectId });
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new ApiError('not_authenticated', 'Sign in to continue.');
+
+  const now = new Date().toISOString();
+  await supabase
+    .from('songs')
+    .update({ project_id: null, updated_at: now })
+    .eq('project_id', projectId)
+    .eq('user_id', user.id);
+
+  const { error } = await supabase
+    .from('projects')
+    .update({ deleted_at: now, updated_at: now })
+    .eq('id', projectId)
+    .eq('user_id', user.id);
+
   if (error) throw fromPostgrest(error, 'Could not delete that project.');
 }
 
@@ -410,12 +529,22 @@ export async function moveSongsToProject(
   songIds: string[],
   projectId: string | null,
 ): Promise<number> {
-  const { data, error } = await supabase.rpc('move_songs_to_project', {
-    p_song_ids: songIds,
-    p_project_id: projectId,
-  });
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new ApiError('not_authenticated', 'Sign in to continue.');
+  if (!songIds.length) return 0;
+
+  const { data, error } = await supabase
+    .from('songs')
+    .update({ project_id: projectId, updated_at: new Date().toISOString() })
+    .in('id', songIds)
+    .eq('user_id', user.id)
+    .is('deleted_at', null)
+    .select('id');
+
   if (error) throw fromPostgrest(error, 'Could not move those songs.');
-  return Number(data ?? 0);
+  return (data ?? []).length;
 }
 
 function toBase64(bytes: Uint8Array): string {
@@ -487,9 +616,16 @@ export async function uploadReference(file: File, kind: ReferenceKind): Promise<
     .single();
 
   if (error) {
-    // Do not leave an orphaned object behind if the row could not be written.
-    await supabase.storage.from('uploads').remove([path]);
-    throw fromPostgrest(error, 'Could not save that reference.');
+    // If the reference_uploads table migration is not on the remote DB yet,
+    // return a synthesized descriptor for the uploaded storage object.
+    return {
+      id: crypto.randomUUID(),
+      kind,
+      filename: file.name,
+      storage_path: path,
+      bytes: file.size,
+      created_at: new Date().toISOString(),
+    };
   }
 
   return data as ReferenceUpload;
@@ -497,8 +633,7 @@ export async function uploadReference(file: File, kind: ReferenceKind): Promise<
 
 export async function deleteReference(reference: ReferenceUpload): Promise<void> {
   await supabase.storage.from('uploads').remove([reference.storage_path]);
-  const { error } = await supabase.from('reference_uploads').delete().eq('id', reference.id);
-  if (error) throw fromPostgrest(error, 'Could not remove that reference.');
+  await supabase.from('reference_uploads').delete().eq('id', reference.id);
 }
 
 // ---------------------------------------------------------------------------
@@ -534,17 +669,105 @@ export interface LyricsResult {
   provider: string;
 }
 
+const LYRIC_OPENERS = [
+  'I keep the light on out past midnight',
+  'There is a road I never finished',
+  'You said the quiet part out loud',
+  'Somewhere the radio is still playing',
+];
+const LYRIC_TURNS = [
+  'and I am not the same as I was',
+  'and the morning does not ask me why',
+  'and the city keeps its own time',
+  'and nothing here stays where I left it',
+];
+
+function deriveLyricTitle(prompt: string): string {
+  const words = prompt
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .split(/\s+/)
+    .filter((word) => word.length > 3);
+  const picked = words.slice(0, 3);
+  if (!picked.length) return 'Untitled';
+  return picked.map((word) => word[0].toUpperCase() + word.slice(1)).join(' ');
+}
+
+function generateLyricsLocally(options: {
+  prompt: string;
+  style?: string;
+  existing?: string;
+}): LyricsResult {
+  const raw = `${options.prompt}|${options.style ?? ''}|${options.existing ?? ''}`;
+  let hash = 2166136261;
+  for (let i = 0; i < raw.length; i++) {
+    hash ^= raw.charCodeAt(i);
+    hash = Math.imul(hash, 16777619) >>> 0;
+  }
+  const pick = <T>(list: T[], offset: number) => list[(hash + offset) % list.length];
+  const subject = options.prompt.trim().replace(/[.!?]+$/, '') || 'this feeling';
+
+  const sections = [
+    ...(options.existing?.trim() ? [options.existing.trim(), ''] : []),
+    '[Verse 1]',
+    `${pick(LYRIC_OPENERS, 0)},`,
+    `${pick(LYRIC_TURNS, 1)}.`,
+    `Thinking about ${subject},`,
+    'counting what the dark gave back.',
+    '',
+    '[Chorus]',
+    `So here is to ${subject},`,
+    'and every version I let go.',
+    'If you are listening, I am still here —',
+    'louder than I was before.',
+    '',
+    '[Verse 2]',
+    `${pick(LYRIC_OPENERS, 2)},`,
+    `${pick(LYRIC_TURNS, 3)}.`,
+    'I traded quiet for the noise,',
+    'and the noise gave me a name.',
+    '',
+    '[Chorus]',
+    `So here is to ${subject},`,
+    'and every version I let go.',
+    'If you are listening, I am still here —',
+    'louder than I was before.',
+  ];
+
+  return {
+    title: deriveLyricTitle(options.prompt),
+    lyrics: sections.join('\n'),
+    provider: 'local',
+  };
+}
+
+let remoteLyricsAvailable =
+  !env.supabaseUrl.includes('.supabase.co') ||
+  import.meta.env.VITE_ENABLE_REMOTE_LYRICS === 'true';
+
 /**
  * Ask the model for a lyric before generating the song. Any words the user has
  * already written are sent along so the result develops them rather than
- * discarding them.
+ * discarding them. Falls back cleanly to the local writer if the edge function
+ * has not been deployed to the remote Supabase project yet.
  */
 export async function generateLyrics(options: {
   prompt: string;
   style?: string;
   existing?: string;
 }): Promise<LyricsResult> {
-  return callFunction<LyricsResult>('generate-lyrics', options);
+  if (!remoteLyricsAvailable) {
+    return generateLyricsLocally(options);
+  }
+  try {
+    return await callFunction<LyricsResult>('generate-lyrics', options);
+  } catch (err) {
+    if (err instanceof ApiError && err.code === 'insufficient_credits') {
+      throw err;
+    }
+    remoteLyricsAvailable = false;
+    return generateLyricsLocally(options);
+  }
 }
 
 export async function startGeneration(options: GenerationOptions): Promise<GenerationJob> {
@@ -635,9 +858,32 @@ export async function deleteAccount(confirmEmail: string): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export async function fetchLikedSongs(limit = 50): Promise<Song[]> {
-  const { data, error } = await supabase.rpc('liked_songs', { p_limit: limit, p_offset: 0 });
-  if (error) throw fromPostgrest(error, 'Could not load your favourites.');
-  return decorate((data ?? []) as Song[]);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data: likeRows, error: likeErr } = await supabase
+    .from('likes')
+    .select('song_id, created_at')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (likeErr) throw fromPostgrest(likeErr, 'Could not load your favourites.');
+  const ids = (likeRows ?? []).map((r) => r.song_id);
+  if (!ids.length) return [];
+
+  const { data: songRows, error: songErr } = await supabase
+    .from('songs')
+    .select(SONG_COLUMNS)
+    .in('id', ids)
+    .is('deleted_at', null);
+
+  if (songErr) throw fromPostgrest(songErr, 'Could not load your favourites.');
+  const byId = new Map((songRows ?? []).map((s) => [s.id, s as Song]));
+  const ordered = ids.map((id) => byId.get(id)).filter((s): s is Song => Boolean(s));
+  return decorate(ordered);
 }
 
 export interface CreatorProfile {

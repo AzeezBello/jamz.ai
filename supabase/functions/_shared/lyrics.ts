@@ -4,9 +4,6 @@
 // feature — and its metering, refunds and UI — is exercisable without an API
 // key, the same arrangement as the audio providers in providers.ts.
 
-import Anthropic from 'npm:@anthropic-ai/sdk';
-import { z } from 'npm:zod';
-import { zodOutputFormat } from 'npm:@anthropic-ai/sdk/helpers/zod';
 import { hashString } from './synth.ts';
 
 export interface LyricsRequest {
@@ -22,15 +19,6 @@ export interface LyricsResult {
   provider: string;
 }
 
-const LyricsSchema = z.object({
-  title: z.string().describe('A short, evocative song title. No quotation marks.'),
-  lyrics: z
-    .string()
-    .describe(
-      'The full lyric. Use [Verse 1], [Chorus], [Bridge] section markers on their own lines, and a blank line between sections.',
-    ),
-});
-
 const SYSTEM = `You write song lyrics for a music generation product.
 
 Write lyrics that a singer could actually perform: concrete images over abstractions,
@@ -38,12 +26,14 @@ a repeatable chorus, and a shape that fits the requested mood. Mark sections wit
 [Verse 1], [Chorus], [Bridge] and similar on their own lines.
 
 Keep it to roughly 16-28 lines unless the brief clearly calls for more. Do not
-explain your choices or add commentary — return only the title and the lyric.`;
+explain your choices or add commentary — return ONLY valid JSON of the shape:
+{"title": "Short Song Title", "lyrics": "[Verse 1]\\n..."}`;
 
 async function writeWithClaude(request: LyricsRequest): Promise<LyricsResult> {
   const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not set');
 
+  const { default: Anthropic } = await import('npm:@anthropic-ai/sdk');
   const client = new Anthropic({ apiKey });
 
   const brief = [
@@ -56,23 +46,30 @@ async function writeWithClaude(request: LyricsRequest): Promise<LyricsResult> {
     .filter(Boolean)
     .join('\n\n');
 
-  const response = await client.messages.parse({
-    model: 'claude-opus-5',
-    max_tokens: 16000,
+  const response = await client.messages.create({
+    model: 'claude-3-5-sonnet-latest',
+    max_tokens: 2048,
     system: SYSTEM,
     messages: [{ role: 'user', content: brief }],
-    output_config: { format: zodOutputFormat(LyricsSchema) },
   });
 
-  // A safety decline returns 200 with no usable content, so check before reading.
   if (response.stop_reason === 'refusal') {
     throw new Error('The model declined to write lyrics for that brief.');
   }
 
-  const parsed = response.parsed_output;
-  if (!parsed) throw new Error('The model returned no usable lyrics.');
-
-  return { title: parsed.title, lyrics: parsed.lyrics, provider: 'anthropic' };
+  const textBlock = response.content.find((b: { type: string }) => b.type === 'text') as
+    | { type: 'text'; text: string }
+    | undefined;
+  const rawText = textBlock?.text?.trim() ?? '';
+  const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    const parsed = JSON.parse(jsonMatch[0]) as { title?: string; lyrics?: string };
+    if (parsed.title && parsed.lyrics) {
+      return { title: parsed.title, lyrics: parsed.lyrics, provider: 'anthropic' };
+    }
+  }
+  if (!rawText) throw new Error('The model returned no usable lyrics.');
+  return { title: titleFrom(request.prompt), lyrics: rawText, provider: 'anthropic' };
 }
 
 // --- Keyless fallback --------------------------------------------------------
