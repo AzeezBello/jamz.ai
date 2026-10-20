@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -78,6 +78,7 @@ const CURATED_COLLECTIONS = [
 ];
 
 export default function HomeHub({ onNavigateTab }: HomeHubProps) {
+  const navigate = useNavigate();
   const [quickPrompt, setQuickPrompt] = useState('');
   const [speechMode, setSpeechMode] = useState(false);
 
@@ -129,12 +130,7 @@ export default function HomeHub({ onNavigateTab }: HomeHubProps) {
 
   const openInStudio = (draft: Parameters<typeof setComposerDraft>[0]) => {
     setComposerDraft(draft);
-    onNavigateTab('library');
-    setTimeout(() => {
-      document
-        .querySelector('[data-tour="studio"]')
-        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 80);
+    navigate('/create');
   };
 
   // Partition public & user songs into the 3 personalized feed columns

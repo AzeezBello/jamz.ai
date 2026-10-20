@@ -4,7 +4,14 @@
  *
  * Kept out of the component file so fast refresh keeps working.
  */
-export const APP_ROUTES = ['/dashboard', '/labs', '/settings', '/billing', '/moderation'] as const;
+export const APP_ROUTES = [
+  '/create',
+  '/dashboard',
+  '/labs',
+  '/settings',
+  '/billing',
+  '/moderation',
+] as const;
 
 export function isAppRoute(pathname: string): boolean {
   return APP_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));

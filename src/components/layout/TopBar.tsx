@@ -12,12 +12,13 @@ function usePageTitle(): string {
   if (pathname === '/settings') return 'Settings';
   if (pathname === '/billing') return 'Billing';
   if (pathname === '/labs') return 'Labs';
+  if (pathname === '/create') return 'Create';
   if (pathname === '/dashboard') {
     const tab = params.get('tab');
     if (tab === 'home') return 'Home';
     if (tab === 'discover') return 'Explore';
     if (tab === 'favourites') return 'Favourites';
-    return 'Studio & Library';
+    return 'Library';
   }
   return 'Jamz';
 }

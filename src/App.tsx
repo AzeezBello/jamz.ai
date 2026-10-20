@@ -15,6 +15,7 @@ const PricingPage = lazy(() => import('@/pages/PricingPage'));
 const LegalPage = lazy(() => import('@/pages/LegalPage'));
 const ModerationPage = lazy(() => import('@/pages/ModerationPage'));
 const CreatorPage = lazy(() => import('@/pages/CreatorPage'));
+const CreatePage = lazy(() => import('@/pages/CreatePage'));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const LabsPage = lazy(() => import('@/pages/LabsPage'));
 const SongPage = lazy(() => import('@/pages/SongPage'));
@@ -64,6 +65,7 @@ function App() {
               <Route path="/reset-password" element={<ResetPasswordPage />} />
 
               <Route element={<RequireAuth />}>
+                <Route path="/create" element={<CreatePage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/labs" element={<LabsPage />} />
                 <Route path="/library" element={<Navigate to="/dashboard" replace />} />

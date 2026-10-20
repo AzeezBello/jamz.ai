@@ -26,7 +26,7 @@ test.describe('dashboard', () => {
 
   test('lyrics survive generation and reach the song page', async ({ page }) => {
     await signUp(page);
-    await page.goto('/dashboard');
+    await page.goto('/create');
 
     await page.getByLabel('Song concept').fill('a quiet lullaby for a long night');
     await page.getByLabel('Lyrics', { exact: true }).fill('hush now\nthe city is sleeping');
@@ -41,7 +41,7 @@ test.describe('dashboard', () => {
 
   test('the composer carries a title, styles and settings through', async ({ page }) => {
     await signUp(page);
-    await page.goto('/dashboard');
+    await page.goto('/create');
 
     await page.getByLabel('Song concept').fill('a patient song about waiting for a train');
     await page.getByLabel('Song title (optional)').fill('The 6:04');
@@ -61,7 +61,7 @@ test.describe('dashboard', () => {
 
   test('v5 is locked on the free plan', async ({ page }) => {
     await signUp(page);
-    await page.goto('/dashboard');
+    await page.goto('/create');
 
     await page.getByLabel('Model version').click();
     const v5 = page.getByRole('option', { name: /v5/ });
@@ -149,6 +149,7 @@ test.describe('dashboard', () => {
 
   test('songs can be filed into a project and filtered by it', async ({ page }) => {
     await withOneSong(page, 'a hazy shoegaze wall of guitars');
+    await page.goto('/create');
 
     await page.getByRole('button', { name: 'New project' }).click();
     await page.getByLabel('New project name').fill('Demos');

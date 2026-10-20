@@ -8,7 +8,6 @@ import GenerationModal from '@/components/modals/GenerationModal';
 // opt-in — so they should not sit in the shell everyone downloads.
 const OnboardingDialog = lazy(() => import('@/components/onboarding/OnboardingDialog'));
 const ProductTour = lazy(() => import('@/components/onboarding/ProductTour'));
-const OnboardingTour = lazy(() => import('@/components/onboarding/OnboardingTour'));
 import Breadcrumbs from '@/components/Breadcrumbs';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useAuthStore } from '@/store/authStore';
@@ -66,7 +65,6 @@ export default function AppLayout() {
         <Suspense fallback={null}>
           <OnboardingDialog />
           <ProductTour />
-          <OnboardingTour />
         </Suspense>
       </div>
     </TooltipProvider>

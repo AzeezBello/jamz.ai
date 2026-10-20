@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
@@ -48,6 +49,7 @@ interface SongTableProps {
 }
 
 export default function SongTable({ songs, owned, onEdit, onDelete }: SongTableProps) {
+  const navigate = useNavigate();
   const {
     selectedIds,
     toggleSelected,
@@ -263,9 +265,7 @@ export default function SongTable({ songs, owned, onEdit, onDelete }: SongTableP
                             instrumental: song.is_instrumental,
                             mode: 'advanced',
                           });
-                          document
-                            .querySelector('[data-tour="studio"]')
-                            ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          navigate('/create');
                           toast.success(`Loaded “${song.title}” into Studio for remixing.`);
                         }}
                         className="cursor-pointer"

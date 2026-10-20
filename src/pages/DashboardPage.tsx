@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -17,13 +17,11 @@ import {
 import { Compass, Globe, Heart, Loader2, Music, Play, Wand2 } from 'lucide-react';
 import EmptyState from '@/components/onboarding/EmptyState';
 import { useOnboardingStore } from '@/store/onboardingStore';
-import CreateStudio from '@/components/studio/CreateStudio';
 import GenerationActivity from '@/components/dashboard/GenerationActivity';
 import LibraryToolbar from '@/components/dashboard/LibraryToolbar';
 import BulkActionBar from '@/components/dashboard/BulkActionBar';
 import SongTable from '@/components/dashboard/SongTable';
 import SongCard from '@/components/SongCard';
-import WorkspacePanel from '@/components/dashboard/WorkspacePanel';
 import EditSongDialog from '@/components/dashboard/EditSongDialog';
 import HomeHub from '@/components/dashboard/HomeHub';
 import ExploreFeed from '@/components/dashboard/ExploreFeed';
@@ -58,6 +56,7 @@ export default function DashboardPage() {
     projectId,
   } = useLibraryStore();
 
+  const navigate = useNavigate();
   const [view, setView] = useState<'list' | 'grid'>('list');
   const [audioType, setAudioType] = useState<'all' | 'vocals' | 'instrumental'>('all');
   const [pendingDelete, setPendingDelete] = useState<Song | null>(null);
@@ -137,16 +136,6 @@ export default function DashboardPage() {
     <div className="max-w-[1400px] mx-auto px-6 pt-8 pb-32">
       {tab !== 'home' && (
         <>
-          {/* Composer and projects side by side, as in the reference: the brief on
-              the left, where it gets filed on the right. */}
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)] mb-8">
-            <CreateStudio />
-            <div className="min-w-0">
-              <h2 className="text-sm font-medium text-white/50 mb-3">Projects</h2>
-              <WorkspacePanel />
-            </div>
-          </div>
-
           <GenerationActivity />
 
           <div data-tour="library-stats" className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -291,11 +280,7 @@ export default function DashboardPage() {
                       action={
                         <>
                           <Button
-                            onClick={() =>
-                              document
-                                .querySelector('[data-tour="studio"]')
-                                ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                            }
+                            onClick={() => navigate('/create')}
                             className="gradient-coral text-black font-semibold"
                           >
                             <Wand2 className="w-4 h-4 mr-2" aria-hidden="true" /> Go to the studio

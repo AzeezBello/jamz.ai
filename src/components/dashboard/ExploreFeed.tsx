@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   Check,
@@ -273,6 +274,7 @@ export default function ExploreFeed({
   onSelectGenre,
   onNavigateTab,
 }: ExploreFeedProps) {
+  const navigate = useNavigate();
   const currentSong = usePlayerStore((state) => state.currentSong);
   const isPlaying = usePlayerStore((state) => state.isPlaying);
   const play = usePlayerStore((state) => state.play);
@@ -309,7 +311,7 @@ export default function ExploreFeed({
       instrumental: song.is_instrumental,
       contentType: 'songs',
     });
-    onNavigateTab('library');
+    navigate('/create');
     toast.success(`Loaded "${song.title}" into Studio for remixing`);
   };
 
@@ -513,7 +515,7 @@ export default function ExploreFeed({
                     style: genre.style,
                     contentType: 'songs',
                   });
-                  onNavigateTab('library');
+                  navigate('/create');
                   toast.success(`Loaded ${genre.title} style into Studio`);
                 }}
                 aria-label={`Create ${genre.title} song in Studio`}

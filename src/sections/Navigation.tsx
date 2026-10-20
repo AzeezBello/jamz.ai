@@ -8,6 +8,7 @@ import {
   Heart,
   Home,
   LayoutDashboard,
+  Library,
   PanelLeftClose,
   PanelLeftOpen,
   Settings,
@@ -58,9 +59,15 @@ export default function Navigation() {
         active: homeActive,
       },
       {
+        label: 'Create',
+        to: '/create',
+        icon: Sparkles,
+        active: pathname === '/create',
+      },
+      {
         label: 'Library',
         to: '/dashboard',
-        icon: Sparkles,
+        icon: Library,
         active: libraryActive,
       },
       {

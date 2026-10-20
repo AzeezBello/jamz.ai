@@ -91,13 +91,23 @@ export default function OnboardingDialog() {
               )}
 
               {isLast ? (
-                <Button
-                  onClick={() => void finishOnboarding({ startTour: true })}
-                  className="gradient-coral text-black font-semibold"
-                >
-                  <Compass className="w-4 h-4 mr-2" aria-hidden="true" />
-                  Show me around
-                </Button>
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => void finishOnboarding({ startTour: true })}
+                    className="border-white/20 text-white hover:bg-white/10"
+                  >
+                    <Compass className="w-4 h-4 mr-2" aria-hidden="true" />
+                    Show me around
+                  </Button>
+                  <Button
+                    onClick={() => void finishOnboarding({ startTour: false })}
+                    className="gradient-coral text-black font-semibold"
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" aria-hidden="true" />
+                    Get started
+                  </Button>
+                </>
               ) : (
                 <Button
                   onClick={() => setIndex(index + 1)}

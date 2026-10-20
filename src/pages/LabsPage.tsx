@@ -396,7 +396,7 @@ export default function LabsPage() {
       style: genre.stylePrompt,
       contentType: 'songs',
     });
-    navigate('/dashboard');
+    navigate('/create');
     toast.success(`Sent "${genre.name}" to Studio`);
   };
 
@@ -1040,7 +1040,7 @@ export default function LabsPage() {
                   style: `Electronic, ${miloBpm} BPM, ${miloWaveform} lead synth, resonant lowpass filter, punchy 909 drums`,
                   contentType: 'songs',
                 });
-                navigate('/dashboard');
+                navigate('/create');
                 toast.success('Sent MILO-1080 synth parameters to Studio');
               }}
               className="bg-white/10 hover:bg-white/15 text-white border border-white/15"

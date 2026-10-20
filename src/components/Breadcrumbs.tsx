@@ -34,12 +34,19 @@ export default function Breadcrumbs() {
       .replace(/_/g, ' ')
       .replace(/\b\w/g, (c) => c.toUpperCase());
     if (segment === 'dashboard') {
-      label = 'Studio';
+      label = 'Library';
+    } else if (segment === 'create') {
+      label = 'Create';
     }
     return { to, label };
   });
 
-  if (pathname === '/dashboard') {
+  if (pathname === '/create' && projectId) {
+    const project = projects.find((p) => p.id === projectId);
+    if (project) {
+      crumbs.push({ to: '/create', label: project.title });
+    }
+  } else if (pathname === '/dashboard') {
     const tab = params.get('tab');
     if (tab === 'home') {
       crumbs.push({ to: '/dashboard?tab=home', label: 'Home' });
