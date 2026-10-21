@@ -133,12 +133,12 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="max-w-[1400px] mx-auto px-6 pt-8 pb-32">
+    <div className="max-w-[1400px] mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-32">
       {tab !== 'home' && (
         <>
           <GenerationActivity />
 
-          <div data-tour="library-stats" className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div data-tour="library-stats" className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
             <StatCard icon={Music} label="Total songs" value={String(stats?.song_count ?? 0)} />
             <StatCard icon={Play} label="Total plays" value={formatCount(stats?.play_total ?? 0)} />
             <StatCard icon={Heart} label="Total likes" value={formatCount(stats?.like_total ?? 0)} />
@@ -149,35 +149,36 @@ export default function DashboardPage() {
 
       <div>
         <div className="min-w-0">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-6">
             <Tabs
               value={tab}
               onValueChange={(value) =>
                 handleTabChange(value as 'home' | 'library' | 'discover' | 'favourites')
               }
+              className="w-full sm:w-auto"
             >
-              <TabsList className="bg-white/5">
+              <TabsList className="bg-white/5 w-full sm:w-auto grid grid-cols-4 sm:inline-flex h-auto p-1">
                 <TabsTrigger
                   value="home"
-                  className="data-[state=active]:bg-[#ff6b6b] data-[state=active]:text-black"
+                  className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 data-[state=active]:bg-[#ff6b6b] data-[state=active]:text-black"
                 >
                   Home
                 </TabsTrigger>
                 <TabsTrigger
                   value="library"
-                  className="data-[state=active]:bg-[#ff6b6b] data-[state=active]:text-black"
+                  className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 data-[state=active]:bg-[#ff6b6b] data-[state=active]:text-black"
                 >
                   My Library
                 </TabsTrigger>
                 <TabsTrigger
                   value="discover"
-                  className="data-[state=active]:bg-[#ff6b6b] data-[state=active]:text-black"
+                  className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 data-[state=active]:bg-[#ff6b6b] data-[state=active]:text-black"
                 >
                   Discover
                 </TabsTrigger>
                 <TabsTrigger
                   value="favourites"
-                  className="data-[state=active]:bg-[#ff6b6b] data-[state=active]:text-black"
+                  className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 data-[state=active]:bg-[#ff6b6b] data-[state=active]:text-black"
                 >
                   Favourites
                 </TabsTrigger>

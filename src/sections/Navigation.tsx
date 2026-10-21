@@ -258,35 +258,95 @@ export default function Navigation() {
     <nav
       aria-label="Main"
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled ? 'glass-strong py-3' : 'bg-transparent py-5'
+        scrolled ? 'py-2.5 sm:py-3' : 'py-3.5 sm:py-5'
       }`}
       style={{ transitionTimingFunction: 'var(--ease-out-expo)' }}
     >
-      <div className="max-w-[1400px] mx-auto px-6 flex items-center justify-between">
-        <Link
-          to="/"
-          className="text-2xl font-bold tracking-tight text-white hover:scale-105 transition-transform duration-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff6b6b]"
+      <div className="max-w-[1400px] mx-auto px-3 sm:px-6">
+        <div
+          className={`flex items-center justify-between transition-all duration-500 rounded-2xl px-3 sm:px-6 ${
+            scrolled
+              ? 'studio-panel py-2 sm:py-2.5 shadow-[0_16px_40px_-16px_rgba(0,0,0,0.85)]'
+              : 'bg-transparent py-1.5 border border-transparent'
+          }`}
         >
-          JAMZ
-        </Link>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+              <SheetTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Open menu"
+                  className="md:hidden rounded-lg p-1.5 text-white/70 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff6b6b]"
+                >
+                  <Menu className="w-5 h-5" aria-hidden="true" />
+                </button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-64 border-white/10 bg-[#08080a] text-white">
+                <SheetHeader>
+                  <SheetTitle className="font-display text-white text-left">JAMZ</SheetTitle>
+                </SheetHeader>
+                <nav aria-label="Marketing mobile" className="space-y-1.5 px-4 mt-4">
+                  {LINKS.map((link) => {
+                    const active = pathname === link.to;
+                    return (
+                      <Link
+                        key={link.label}
+                        to={link.to}
+                        onClick={() => setMobileNavOpen(false)}
+                        aria-current={active ? 'page' : undefined}
+                        className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors ${
+                          active
+                            ? 'bg-[#ff6b6b] text-black font-semibold'
+                            : 'text-white/70 hover:bg-white/10 hover:text-white'
+                        }`}
+                      >
+                        <span>{link.label}</span>
+                      </Link>
+                    );
+                  })}
+                </nav>
+              </SheetContent>
+            </Sheet>
 
-        <div className="hidden md:flex items-center gap-8">
-          {LINKS.map((link) => (
             <Link
-              key={link.label}
-              to={link.to}
-              aria-current={pathname === link.to ? 'page' : undefined}
-              className="relative text-sm font-medium text-white/70 hover:text-white transition-colors duration-300 group rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff6b6b]"
+              to="/"
+              className="font-display text-xl sm:text-2xl font-extrabold tracking-[-0.04em] text-white hover:text-[#ff8e8e] transition-colors duration-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff6b6b]"
             >
-              {link.label}
-              <span className="absolute -bottom-1 left-1/2 w-0 h-0.5 bg-[#ff6b6b] group-hover:w-full group-hover:left-0 transition-all duration-300" />
+              JAMZ
             </Link>
-          ))}
-        </div>
+            <span
+              aria-hidden="true"
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 font-mono-tech text-[10px] uppercase tracking-[0.16em] text-white/60"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-[#ff6b6b]" />
+              v5.0 Studio
+            </span>
+          </div>
 
-        <div className="flex items-center gap-1">
-          <NotificationBell />
-          <UserMenu />
+          <div className="hidden md:flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1">
+            {LINKS.map((link) => {
+              const active = pathname === link.to;
+              return (
+                <Link
+                  key={link.label}
+                  to={link.to}
+                  aria-current={active ? 'page' : undefined}
+                  className={`relative rounded-full px-4 py-1.5 text-xs font-semibold tracking-wide transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff6b6b] ${
+                    active
+                      ? 'bg-white/12 text-white shadow-xs'
+                      : 'text-white/65 hover:text-white hover:bg-white/[0.05]'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center gap-1 sm:gap-1.5">
+            <NotificationBell />
+            <UserMenu />
+          </div>
         </div>
       </div>
     </nav>

@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Check, Loader2 } from 'lucide-react';
+import { Check, Disc3, Loader2 } from 'lucide-react';
 import AuthModal from '@/components/modals/AuthModal';
 import { fetchPlans, startCheckout } from '@/lib/api';
 import { formatMoney } from '@/lib/format';
@@ -13,7 +13,11 @@ import type { BillingInterval, Plan } from '@/lib/types';
 
 const BADGE: Record<string, string> = { pro: 'Most Popular', premier: 'Best Value' };
 
-export default function Pricing() {
+interface PricingProps {
+  standalone?: boolean;
+}
+
+export default function Pricing({ standalone = false }: PricingProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [interval, setInterval] = useState<BillingInterval>('monthly');
@@ -68,56 +72,76 @@ export default function Pricing() {
     }
   };
 
-  return (
-    <section ref={sectionRef} id="pricing" className="py-24 px-6 relative">
-      <div className="max-w-[1400px] mx-auto">
-        <div className="text-center mb-12">
-          <h2
-            className={`text-4xl md:text-5xl font-bold text-white mb-4 transition-all duration-700 ${
-              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-            }`}
-            style={{ transitionTimingFunction: 'var(--ease-out-expo)' }}
-          >
-            Start making music for free
-          </h2>
-          <p className="text-white/60 text-lg">Select the plan that best fits your needs</p>
-        </div>
+  const HeadingTag = standalone ? 'h1' : 'h2';
 
-        <div className="flex items-center justify-center gap-4 mb-12">
-          <span className={`text-sm ${interval === 'monthly' ? 'text-white' : 'text-white/50'}`}>
-            Monthly
-          </span>
-          <Switch
-            checked={interval === 'yearly'}
-            onCheckedChange={(checked) => setInterval(checked ? 'yearly' : 'monthly')}
-            aria-label="Bill yearly"
-            className="data-[state=checked]:bg-[#ff6b6b]"
-          />
-          <span className={`text-sm ${interval === 'yearly' ? 'text-white' : 'text-white/50'}`}>
-            Yearly
-          </span>
-          {interval === 'yearly' && (
-            <span className="text-xs text-[#ff6b6b] bg-[#ff6b6b]/10 px-2 py-1 rounded-full">
+  return (
+    <section
+      ref={sectionRef}
+      id="pricing"
+      className="py-24 sm:py-28 px-4 sm:px-6 relative border-b border-white/[0.07]"
+    >
+      <div className="max-w-[1400px] mx-auto">
+        {/* Asymmetric Header + Billing Switcher */}
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-14">
+          <div
+            className={`motion-reveal ${
+              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+            }`}
+          >
+            <div className="inline-flex items-center gap-2 font-mono-tech text-[11px] uppercase tracking-[0.18em] text-[#ff8e8e] mb-4">
+              <Disc3 className="w-3.5 h-3.5" aria-hidden="true" />
+              05 // LICENSING &amp; CREDIT ALLOCATION
+            </div>
+            <HeadingTag className="font-display text-display-section font-bold text-white mb-3">
+              Start making music for free
+            </HeadingTag>
+            <p className="text-white/60 text-base sm:text-lg max-w-[52ch]">
+              Select the studio allocation that matches your output. Upgrade anytime for commercial
+              master ownership and multi-track WAV stem exports.
+            </p>
+          </div>
+
+          {/* Tactile Billing Interval Dock */}
+          <div className="studio-surface rounded-2xl px-5 py-3.5 flex items-center gap-4 self-start lg:self-auto">
+            <span
+              className={`font-mono-tech text-xs uppercase tracking-wider ${
+                interval === 'monthly' ? 'text-white font-semibold' : 'text-white/45'
+              }`}
+            >
+              Monthly
+            </span>
+            <Switch
+              checked={interval === 'yearly'}
+              onCheckedChange={(checked) => setInterval(checked ? 'yearly' : 'monthly')}
+              aria-label="Bill yearly"
+              className="data-[state=checked]:bg-[#ff6b6b]"
+            />
+            <span
+              className={`font-mono-tech text-xs uppercase tracking-wider ${
+                interval === 'yearly' ? 'text-white font-semibold' : 'text-white/45'
+              }`}
+            >
+              Yearly
+            </span>
+            <span className="font-mono-tech text-[11px] text-[#ff8e8e] bg-[#ff6b6b]/12 border border-[#ff6b6b]/30 px-2.5 py-0.5 rounded-full">
               save 25%
             </span>
-          )}
+          </div>
         </div>
 
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
             {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-[520px] rounded-2xl bg-white/5" />
+              <Skeleton key={i} className="h-[520px] rounded-2xl bg-white/[0.04]" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-7 items-stretch">
             {plans.map((plan, index) => {
               const badge = BADGE[plan.id];
               const isFree = plan.monthly_price_cents === 0;
               const isCurrent = profile?.plan_id === plan.id;
 
-              // The yearly price is a full-year total; show it per month and
-              // state the real saving rather than repeating the monthly price.
               const perMonthCents =
                 interval === 'yearly'
                   ? Math.round(plan.yearly_price_cents / 12)
@@ -125,59 +149,66 @@ export default function Pricing() {
               const savingCents = plan.monthly_price_cents * 12 - plan.yearly_price_cents;
 
               return (
-                <div
+                <article
                   key={plan.id}
-                  className={`relative rounded-2xl transition-all duration-700 ${
+                  className={`relative rounded-2xl flex flex-col motion-reveal ${
                     badge === 'Most Popular'
-                      ? 'bg-gradient-to-b from-white/10 to-white/5 border-2 border-[#ff6b6b]/50 md:scale-105 z-10'
-                      : 'bg-white/5 border border-white/10 hover:border-white/20'
-                  } ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'}`}
+                      ? 'studio-surface border-[#ff6b6b]/55 shadow-[0_24px_48px_-18px_rgba(255,107,107,0.22)]'
+                      : 'studio-surface'
+                  } ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}
                   style={{
-                    transitionTimingFunction: 'var(--ease-out-expo)',
-                    transitionDelay: `${400 + index * 100}ms`,
+                    transitionDelay: `${180 + index * 100}ms`,
                   }}
                 >
                   {badge && (
                     <span
-                      className={`absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-semibold ${
+                      className={`absolute -top-3.5 right-6 px-3.5 py-1 rounded-full font-mono-tech text-[11px] uppercase tracking-wider font-semibold ${
                         badge === 'Most Popular'
                           ? 'gradient-coral text-black'
-                          : 'bg-white/10 text-white'
+                          : 'bg-white/12 border border-white/20 text-white'
                       }`}
                     >
                       {badge}
                     </span>
                   )}
 
-                  <div className="p-6 lg:p-8">
-                    <h3 className="text-xl font-semibold text-white mb-1">{plan.name}</h3>
-                    <p className="text-white/50 text-sm mb-6">{plan.description}</p>
+                  <div className="p-6 lg:p-8 flex flex-col flex-1">
+                    <h3 className="font-display text-2xl font-bold text-white mb-1.5">
+                      {plan.name}
+                    </h3>
+                    <p className="text-white/55 text-sm mb-6 min-h-[2.5rem]">{plan.description}</p>
 
-                    <div className="mb-6">
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-4xl font-bold text-white">
+                    <div className="studio-well rounded-xl p-4 mb-6">
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="font-mono-tech text-4xl font-bold text-white">
                           {formatMoney(perMonthCents)}
                         </span>
-                        <span className="text-white/50">/month</span>
+                        <span className="font-mono-tech text-xs text-white/50">/month</span>
                       </div>
                       {interval === 'yearly' && !isFree && (
-                        <p className="text-[#ff6b6b] text-sm mt-1">
+                        <p className="font-mono-tech text-[#ff8e8e] text-xs mt-1.5">
                           {formatMoney(plan.yearly_price_cents)} billed yearly — saves{' '}
                           {formatMoney(savingCents)}
                         </p>
                       )}
-                      {!isFree && (
-                        <p className="text-white/40 text-xs mt-1">Taxes calculated at checkout</p>
+                      {!isFree ? (
+                        <p className="font-mono-tech text-white/40 text-[11px] mt-1">
+                          Taxes calculated at checkout
+                        </p>
+                      ) : (
+                        <p className="font-mono-tech text-white/40 text-[11px] mt-1">
+                          No credit card required
+                        </p>
                       )}
                     </div>
 
                     <Button
                       onClick={() => void handleSelect(plan)}
                       disabled={pendingPlan === plan.id || isCurrent}
-                      className={`w-full mb-8 font-semibold ${
+                      className={`w-full mb-7 font-semibold py-5 rounded-xl ${
                         badge === 'Most Popular'
                           ? 'gradient-coral text-black hover:opacity-90'
-                          : 'bg-white/10 text-white hover:bg-white/20'
+                          : 'bg-white/10 text-white hover:bg-white/15 border border-white/10'
                       }`}
                     >
                       {pendingPlan === plan.id ? (
@@ -191,9 +222,9 @@ export default function Pricing() {
                       )}
                     </Button>
 
-                    <ul className="space-y-3">
+                    <ul className="space-y-3 pt-5 border-t border-white/[0.08] flex-1">
                       {plan.features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-3 text-sm text-white/70">
+                        <li key={feature} className="flex items-start gap-3 text-sm text-white/75">
                           <Check
                             className="w-4 h-4 text-[#ff6b6b] mt-0.5 flex-shrink-0"
                             aria-hidden="true"
@@ -203,7 +234,7 @@ export default function Pricing() {
                       ))}
                     </ul>
                   </div>
-                </div>
+                </article>
               );
             })}
           </div>

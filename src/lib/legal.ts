@@ -84,7 +84,7 @@ export const PRIVACY: Policy = {
         'Account details: your email address, display name and any profile information you add.',
         'Content: the prompts, lyrics and settings you submit, and the audio generated from them.',
         'Usage: credit transactions, generation history, plays and likes.',
-        'Billing: handled by Stripe. We store a customer reference, subscription status and invoice records — never your card number.',
+        'Billing: handled by Stripe. We store a customer reference, subscription status and invoice records, never your card number.',
       ],
     },
     {

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -11,34 +11,46 @@
   }
 
   :root {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
-    --card: 0 0% 4%;
-    --card-foreground: 0 0% 100%;
-    --popover: 0 0% 4%;
-    --popover-foreground: 0 0% 100%;
+    color-scheme: dark;
+    --background: 240 10% 3%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 5%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 5%;
+    --popover-foreground: 0 0% 98%;
     --primary: 0 100% 71%;
     --primary-foreground: 0 0% 0%;
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 60%;
+    --secondary: 240 7% 11%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 6% 15%;
+    --muted-foreground: 240 5% 64%;
     --accent: 0 100% 71%;
     --accent-foreground: 0 0% 0%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
+    --border: 240 6% 15%;
+    --input: 240 6% 15%;
     --ring: 0 100% 71%;
     --radius: 0.75rem;
 
-    /* Custom Jamz colors */
+    /* Typography stacks (taste-skill: high-character display + editorial sans + technical mono) */
+    --font-display: 'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    /* Progressive-enhancement perceptual color interpolation space */
+    --in-oklab: ;
+    --in-oklch: ;
+
+    /* Custom Jamz studio palette (layered carbon depth, zero AI-purple) */
     --jamz-coral: #ff6b6b;
     --jamz-coral-light: #ff8e8e;
-    --jamz-black: #000000;
-    --jamz-dark: #0a0a0a;
-    --jamz-card: rgba(255, 255, 255, 0.05);
-    --jamz-border: rgba(255, 255, 255, 0.1);
+    --jamz-amber: #ffb168;
+    --jamz-black: #070709;
+    --jamz-dark: #0d0d11;
+    --jamz-panel: #121218;
+    --jamz-card: rgba(255, 255, 255, 0.04);
+    --jamz-border: rgba(255, 255, 255, 0.09);
 
     /* Animation easings */
     --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -47,6 +59,13 @@
     --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
     --ease-dramatic: cubic-bezier(0.87, 0, 0.13, 1);
     --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @supports (background: linear-gradient(in oklab, white, black)) {
+    :root {
+      --in-oklab: in oklab;
+      --in-oklch: in oklch;
+    }
   }
 }
 
@@ -57,19 +76,23 @@
 
   html {
     scroll-behavior: smooth;
+    @media (prefers-reduced-motion: reduce) {
+      scroll-behavior: auto;
+    }
   }
 
   body {
-    @apply bg-black text-white antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
+    background-color: var(--jamz-black);
+    @apply text-white antialiased;
+    font-family: var(--font-sans);
+    line-height: 1.55;
+    text-align: start;
   }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
+  :where(h1, h2, h3, h4, h5, h6) {
+    font-family: var(--font-display);
+    letter-spacing: -0.025em;
+    line-height: 1.1;
     text-wrap: balance;
   }
 
@@ -78,40 +101,97 @@
   li,
   .pretty-text {
     text-wrap: pretty;
+    overflow-wrap: break-word;
   }
 }
 
 @layer utilities {
-  /* Gradient backgrounds */
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  .font-mono-tech {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Fluid display typography using viewport + rem clamp() */
+  .text-display-hero {
+    font-size: clamp(2.65rem, 1.45rem + 5.2vw, 5.5rem);
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+  }
+
+  .text-display-section {
+    font-size: clamp(2rem, 1.25rem + 2.8vw, 3.5rem);
+    line-height: 1.06;
+    letter-spacing: -0.03em;
+  }
+
+  /* Perceptually uniform gradients in oklab with pre-2024 fallback */
   .gradient-hero {
     background: radial-gradient(
-      ellipse at 50% 0%,
-      rgba(255, 107, 107, 0.4) 0%,
-      rgba(255, 142, 142, 0.2) 25%,
+      ellipse at 50% 0% var(--in-oklab),
+      rgba(255, 107, 107, 0.34) 0%,
+      rgba(255, 177, 104, 0.14) 30%,
       transparent 70%
     );
   }
 
   .gradient-coral {
-    background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+    background: linear-gradient(135deg var(--in-oklab), #ff6b6b 0%, #ff9a76 100%);
+  }
+
+  /* Tactile studio surfaces with 1px structural hairlines & top specular edge */
+  .studio-surface {
+    background: linear-gradient(
+      180deg var(--in-oklab),
+      rgba(24, 24, 31, 0.88) 0%,
+      rgba(13, 13, 18, 0.94) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.09),
+      0 20px 40px -24px rgba(0, 0, 0, 0.75);
+  }
+
+  .studio-panel {
+    background: rgba(12, 12, 16, 0.82);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .studio-well {
+    background: rgba(5, 5, 8, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.65);
+  }
+
+  .studio-grid-bg {
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 3.5rem 3.5rem;
   }
 
   /* Glass effect */
   .glass {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(16, 16, 22, 0.72);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.11);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
   }
 
   .glass-strong {
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(8, 8, 11, 0.86);
+    backdrop-filter: blur(24px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.09);
   }
 
   /* Text gradient */
   .text-gradient {
-    background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+    background: linear-gradient(135deg var(--in-oklab), #ff6b6b 0%, #ffb168 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -119,41 +199,60 @@
 
   /* Glow effects */
   .glow-coral {
-    box-shadow: 0 0 30px rgba(255, 107, 107, 0.4);
+    box-shadow: 0 0 30px rgba(255, 107, 107, 0.35);
   }
 
   .glow-coral-strong {
-    box-shadow: 0 0 50px rgba(255, 107, 107, 0.6);
+    box-shadow: 0 0 50px rgba(255, 107, 107, 0.55);
   }
 
-  /* Card hover lift - refined subtle elevation */
+  /* Card hover lift - refined subtle elevation on compositor thread */
   .card-lift {
     transition:
-      transform 0.2s var(--ease-out-expo),
-      box-shadow 0.2s var(--ease-out-expo);
+      transform 0.25s var(--ease-out-expo),
+      border-color 0.25s var(--ease-out-expo),
+      box-shadow 0.25s var(--ease-out-expo);
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
   }
 
   .card-lift:hover {
     transform: translateY(-3px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
+      0 16px 32px -12px rgba(0, 0, 0, 0.65);
+    @media (prefers-reduced-motion: reduce) {
+      transform: none;
+    }
   }
 
   .card-lift:active {
     transform: translateY(0) scale(0.99);
   }
 
-  /* Animation utilities */
+  /* Animation utilities with nested prefers-reduced-motion rules */
   .animate-float {
     animation: float 6s ease-in-out infinite;
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
   }
 
   .animate-pulse-glow {
     animation: pulse-glow 3s ease-in-out infinite;
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
   }
 
   .animate-gradient-shift {
     animation: gradient-shift 15s ease infinite;
     background-size: 200% 200%;
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
   }
 
   /* 3D perspective */
@@ -185,6 +284,99 @@
     overflow-y: auto;
     -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
     mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+  }
+}
+
+/* Container-query responsive specification table (modern-web-guidance: responsive-table) */
+.responsive-table-wrapper {
+  overflow: auto;
+  max-inline-size: 100%;
+  container-type: inline-size;
+}
+
+.responsive-spec-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.responsive-spec-table thead {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+}
+
+.responsive-spec-table tbody th {
+  position: sticky;
+  inset-inline-start: 0;
+  background-color: #101016;
+}
+
+@container (width < 600px) {
+  .responsive-spec-table,
+  .responsive-spec-table thead,
+  .responsive-spec-table tbody,
+  .responsive-spec-table tr,
+  .responsive-spec-table th,
+  .responsive-spec-table td {
+    display: block;
+  }
+
+  .responsive-spec-table thead {
+    display: none;
+  }
+
+  .responsive-spec-table tbody tr {
+    margin-block-end: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.875rem;
+    overflow: hidden;
+  }
+
+  .responsive-spec-table tbody tr:last-child {
+    margin-block-end: 0;
+  }
+
+  .responsive-spec-table tbody th {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 2;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  .responsive-spec-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .responsive-spec-table td:nth-child(2)::before {
+    content: var(--label-2, 'Free') ': ';
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .responsive-spec-table td:nth-child(3)::before {
+    content: var(--label-3, 'Pro Studio') ': ';
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #ff8e8e;
+  }
+
+  .responsive-spec-table td:nth-child(4)::before {
+    content: var(--label-4, 'Premier') ': ';
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #ffb168;
   }
 }
 
@@ -294,13 +486,14 @@
   }
 }
 
-/* Reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+.motion-reveal {
+  transition-property: opacity, transform;
+  transition-duration: 0.7s;
+  transition-timing-function: var(--ease-out-expo);
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
 }

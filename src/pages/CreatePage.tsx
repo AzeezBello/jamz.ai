@@ -60,7 +60,7 @@ export default function CreatePage() {
   };
 
   return (
-    <div className="max-w-[1400px] mx-auto px-6 pt-8 pb-32">
+    <div className="max-w-[1400px] mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-32">
       <div className="grid gap-6 xl:grid-cols-[minmax(0,440px)_minmax(0,1fr)] items-start">
         <CreateStudio />
 
@@ -73,7 +73,7 @@ export default function CreatePage() {
           <GenerationActivity />
 
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h2 className="text-sm font-medium text-white/70">
                   {activeProject ? `${activeProject.title} Songs` : 'Recent Workspace Songs'}

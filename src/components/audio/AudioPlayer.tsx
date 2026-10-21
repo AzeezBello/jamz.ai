@@ -273,7 +273,7 @@ export default function AudioPlayer() {
       {showQueue && (
         <aside
           aria-label="Play queue"
-          className="fixed bottom-24 right-4 z-50 w-80 max-h-96 overflow-auto glass rounded-xl border border-white/10 p-4"
+          className="fixed bottom-24 left-4 right-4 sm:left-auto sm:right-4 z-50 sm:w-80 max-h-96 overflow-auto glass rounded-xl border border-white/10 p-4"
         >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-white font-semibold">Queue</h2>
